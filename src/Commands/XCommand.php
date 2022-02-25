@@ -11,7 +11,7 @@ class XCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'command:name';
+    protected $signature = 'x';
 
     /**
      * The console command description.
@@ -37,6 +37,7 @@ class XCommand extends Command
      */
     public function handle()
     {
+
         return 0;
     }
 }
