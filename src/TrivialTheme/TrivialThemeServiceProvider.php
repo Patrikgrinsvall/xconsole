@@ -15,11 +15,11 @@ class TrivialThemeServiceProvider extends ServiceProvider
     public function boot()
     {
         Nova::booted(function () {
-            Nova::theme(asset('/xconsole/trivial-theme/theme.css'));
+            Nova::theme(asset('/trivial-theme/theme.css'));
         });
 
         $this->publishes([
-            __DIR__ . '/resources/css' => public_path('xconsole/trivial-theme'),
+            __DIR__ . '/resources/css' => public_path('trivial-theme'),
         ], 'public');
     }
 

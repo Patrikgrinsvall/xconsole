@@ -18,7 +18,7 @@ class XCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Starting point for the package X-Console';
 
     /**
      * Create a new command instance.
