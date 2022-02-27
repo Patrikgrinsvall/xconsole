@@ -48,8 +48,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "PatrikGrinsvall\\XConsole\\ServiceProviders\\XConsoleServiceProvider",
-                "PatrikGrinsvall\\XConsole\\TrivialTheme\\TrivialThemeServiceProvider"
+                "PatrikGrinsvall\\XConsole\\ServiceProviders\\XConsoleServiceProvider"
             ]
         }
     },
