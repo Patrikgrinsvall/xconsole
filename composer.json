@@ -9,7 +9,7 @@
         "laravel",
         "artisan"
     ],
-    "version": "0.0.4",
+    "version": "0.0.6",
     "license": "MIT",
     "support": {
         "source": "https://github.com/patrikgrinsvall/xconsole"

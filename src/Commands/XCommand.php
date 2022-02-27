@@ -37,6 +37,7 @@ class XCommand extends Command
      */
     public function handle()
     {
+        $this->call("x:srv");
 
         return 0;
     }
