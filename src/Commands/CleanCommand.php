@@ -13,7 +13,6 @@ use Symfony\Component\Process\Process;
 class CleanCommand extends Command
 {
     use HasParameters;
-    use HasTheme;
 
     /**
      * The console command name.
@@ -41,9 +40,6 @@ class CleanCommand extends Command
     {
         #foreach($this->getOptions()
         #       $this->addOption($key)
-        if (!empty($this->options('force'))) {
-            $this->forceFlush();
-        }
 
 
         return CommandAlias::SUCCESS;
@@ -52,32 +48,30 @@ class CleanCommand extends Command
     public function forceFlush()
     {
 
-        $commands[] = [
-            $this->os_call('rm'),
-            base_path('bootstrap' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . '*.php'),
-        ];
-        $commands[] = [
-            $this->os_call('rm'),
-            storage_path('framework' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . '*.php'),
-        ];
+        $commands[] = [ $this->os_call('rm'), base_path('bootstrap' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . '*.php'), ];
+        $commands[] = [ $this->os_call('rm'), storage_path('framework' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . '*.php'), ];
         try {
             foreach ($commands as $c) {
                 Process::fromShellCommandline($c[0], $c[1])->run(function ($i, $m) use ($c) {
-                    $this->suprise("returned from", $c, $i, $m);
+                    $this->line("returned from", $c, $i, $m);
                 });
             }
         } catch (Exception $exception) {
-            $this->suprise("error", $exception->getMessage());
+            $this->line("Exception", $exception->getMessage());
 
 
         }
-
-
+        /*
+                ProcessRunner::make([ [ 'php', 'artisan', 'cache:clear' ], [ 'php', 'artisan', 'config:clear' ], [ 'php', 'artisan', 'coute:clear' ],
+                                      [ 'php', 'artisan', 'view:clear' ], [ 'php', 'artisan', 'optimize' ], ]);
+                */
+        /*
         $this->call('cache:clear');
         $this->call('config:clear');
         $this->call('route:clear');
         $this->call('view:clear');
         $this->call('optimize');
+        */
     }
 
     /**
@@ -107,14 +101,6 @@ class CleanCommand extends Command
      */
     protected function getOptions()
     {
-        return [
-            [
-                'force',
-                'f',
-                InputOption::VALUE_OPTIONAL,
-                'force full reflush of all except migrations and seeders',
-                false,
-            ],
-        ];
+        return [ [ 'force', 'f', InputOption::VALUE_OPTIONAL, 'force full reflush of all except migrations and seeders', false, ], ];
     }
 }

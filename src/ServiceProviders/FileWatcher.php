@@ -5,13 +5,15 @@ namespace PatrikGrinsvall\XConsole\ServiceProviders;
 class FileWatcher
 {
     private static  $i = null;
-    protected array $paths;
+    public array    $paths;
     protected array $callables;
 
     public static function make(string $path = null, callable $callback = null)
     {
-        if (self::$i !== null) {
-            if ($path != null) {
+        if (self::$i !== null)
+        {
+            if ($path != null)
+            {
                 self::$i->add($path, $callback);
             }
 
@@ -28,11 +30,7 @@ class FileWatcher
         $stat = stat($path);
 
         $last_mtime         = $stat['mtime'];
-        $this->paths[$path] = [
-            'path'       => $path,
-            'last_mtime' => $last_mtime,
-            'callback'   => $callback,
-        ];
+        $this->paths[$path] = [ 'path' => $path, 'last_mtime' => $last_mtime, 'callback' => $callback, ];
 
         return $this;
     }
@@ -59,8 +57,10 @@ class FileWatcher
     public function get_changes()
     {
         $changes = null;
-        foreach ($this->paths as $path) {
-            if ($this->changed($path['path'])) {
+        foreach ($this->paths as $path)
+        {
+            if ($this->changed($path['path']))
+            {
                 $changes[] = $path['path'];
             }
 
@@ -77,7 +77,8 @@ class FileWatcher
      */
     public function changed(string $path)
     {
-        if (!isset($this->paths[$path])) {
+        if (!isset($this->paths[$path]))
+        {
 
             return 0;
         }
@@ -86,7 +87,8 @@ class FileWatcher
         $stat = stat($path);
         $now  = $stat['mtime'];
 
-        if ($last != $now) {
+        if ($last != $now)
+        {
             $this->paths[$path]['last_mtime'] = $now;
             $cb                               = $this->paths[$path]['callback'] ?? function ($item) {
                     return false;
@@ -104,7 +106,8 @@ class FileWatcher
     public function count_changes()
     {
         $changes = 0;
-        foreach ($this->paths as $path) {
+        foreach ($this->paths as $path)
+        {
             $changes = $changes + $this->changed($path['path']);
 
         }

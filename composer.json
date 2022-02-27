@@ -9,7 +9,6 @@
         "laravel",
         "artisan"
     ],
-    "version": "dev-master",
     "license": "MIT",
     "support": {
         "source": "https://github.com/patrikgrinsvall/xconsole"
@@ -32,6 +31,7 @@
             "PatrikGrinsvall\\XConsole\\": "src"
         }
     },
+    "version": "0.0.4",
     "scripts": {
         "publish": "@php artisan vendor:publish --provider PatrikGrinsvall\\XConsole\\TrivialTheme\\TrivialThemeServiceProvider",
         "pr": "echo 'creating pr using default ssh-provider'",
@@ -50,8 +50,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "PatrikGrinsvall\\XConsole\\ServiceProviders\\XConsoleServiceProvider",
-                "PatrikGrinsvall\\XConsole\\TrivialTheme\\TrivialThemeServiceProvider"
+                "PatrikGrinsvall\\XConsole\\ServiceProviders\\XConsoleServiceProvider"
             ]
         }
     },

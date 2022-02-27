@@ -4,48 +4,62 @@ namespace PatrikGrinsvall\XConsole\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Support\Env;
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
 use PatrikGrinsvall\XConsole\ServiceProviders\FileWatcher;
 use PatrikGrinsvall\XConsole\ServiceProviders\ProcessRunner;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
+use Symfony\Component\Console\Cursor;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 
 class SrvCommand extends Command
 {
-    use HasTheme;
+    use HasTheme, InteractsWithIO;
 
     public array $processes;
+    public       $lastColor  = 0;
+    public       $colors     = [ "\e[38;2;255;100;0m", ];
+    public       $processRunner, $filewatcher;
+    public       $lastUpdate = 0.0;
 
+    public $cursor, $cursorpos;
     /**
      * The console command name.
      *
      * @var string
      */
     protected $name = 'x:srv';
-
     /**
      * The console command description.
      *
      * @var string
      */
     protected $description = 'Improvement of laravels default serve command with easier to read output';
-
     /**
      * The current port offset.
      *
      * @var int
      */
-    protected $portOffset = 0;
-    private   $processRunner, $filewatcher;
+    protected $portOffset    = 0;
+    private   $startTime     = 0;
+    private   $stdin;
+    private   $shouldRestart = false;
+    private   $_SERVER;
+    private   $stats         = [ 'uptime' => 0, 'last_output' => 0 ];
 
-    private $stdin;
-    private $shouldRestart = false;
+    public function __construct()
+    {
+        parent::__construct();
+        for ($x = 50; $x <= 255; $x += 50)
+        {
 
+            $this->colors[] = "\e[38;255;$x;$x;0m";
+        }
 
-    private $_SERVER;
+    }
 
     /**
      * Execute the console command.
@@ -57,11 +71,13 @@ class SrvCommand extends Command
     public function handle()
     {
         chdir(public_path());
+        $this->cursor    = new Cursor($this->getOutput()->getOutput());
+        $this->cursorpos = $this->cursor->getCurrentPosition() ?? [ 0, 0 ];
+        $this->_SERVER   = $_SERVER['_'];
 
-        $this->_SERVER = $_SERVER['_'];
         $this->registerShutdown();
 
-        if ($this->option('demo')) $this->demoTheme();
+        // if ($this->option('demo')) $this->demoTheme();
 
         $this->processRunner = ProcessRunner::make();
         $this->filewatcher   = FileWatcher::make(base_path('.env'), callback: function () {
@@ -72,7 +88,7 @@ class SrvCommand extends Command
         });
         $this->filewatcher->add(__FILE__);
 
-        $this->processRunner->add('serve', $this->cmd(), public_path());
+        $this->processRunner->add('PHP local server', $this->cmd(), public_path());
         $this->serve();
 
         $this->loop();
@@ -85,19 +101,15 @@ class SrvCommand extends Command
     {
         $restartFunction = function () {
             $cmd   = $_SERVER['_'];
-            $paths = [
-                $_SERVER['SCRIPT_FILENAME'],
-                $_SERVER['PWD'] . DIRECTORY_SEPARATOR . 'artisan',
-            ];
-            foreach ($paths as $path) {
-                if (file_exists($path)) {
+            $paths = [ $_SERVER['SCRIPT_FILENAME'], $_SERVER['PWD'] . DIRECTORY_SEPARATOR . 'artisan', ];
+            foreach ($paths as $path)
+            {
+                if (file_exists($path))
+                {
                     break;
                 }
             }
-            pcntl_exec($cmd, [
-                $path,
-                "srv",
-            ]);
+            pcntl_exec($cmd, [ $path, "x:srv", ]);
         };
         register_shutdown_function($restartFunction);
     }
@@ -109,32 +121,45 @@ class SrvCommand extends Command
      */
     protected function cmd()
     {
-        return [
-            (new PhpExecutableFinder)->find(false),
-            '-S',
-            $this->option('host') . ':' . $this->option('port'),
-            base_path('server.php'),
-        ];
+        return [ (new PhpExecutableFinder)->find(false), '-S', $this->option('host') . ':' . $this->option('port'), base_path('server.php'), ];
     }
 
     public function serve()
     {
-        $this->supportsColors();
-        error_log("\x1b[38;2;255;100;0mTesting\x1b[0m\e[38;2;155;255;0mTrueColor\e[0m\n");
-        $this->stdout('Starting', 'Extended', 'Dev', 'Server', "http://" . Env::get("SERVER_ADDR") . ":" . Env::get('SERVER_PORT'));
-        $this->processRunner->run(function ($a, $b) {
-            error_log($a . "-" . $b);
+        $this->startTime = microtime();
+        $this->line('Starting  Extended Dev Server on: ', Env::get('SERVER_PROTO', 'http'), '://', Env::get("SERVER_ADDR"), ':', Env::get('SERVER_PORT'));
+        $this->processRunner->run(function ($type, $msg) {
+            XConsoleEvent::dispatch($this->color(strtoupper($type)) . ' | ' . $msg);
         });
+    }
+
+    public function line(...$msg)
+    {
+        foreach ($msg as $key => $m)
+        {
+            $msg[$key] = $this->color($m);
+        }
+        parent::getOutput()->write($msg);
+        if (count($msg) - 1 == $key) parent::getOutput()->write("\n");
+
+
+    }
+
+    public function color($msg)
+    {
+        return "\e[38;2;255;" . rand(50, 255) . ";" . rand(50, 255) . "m" . $msg . "\e[0m";
     }
 
     public function loop()
     {
         $running = true;
-        while ($running) {
-
+        while ($running)
+        {
+            $this->updatestats();
             $changes = $this->filewatcher->count_changes();
-            if ($changes !== 0) {
-                $this->call('z:z');
+            if ($changes !== 0)
+            {
+                $this->call('x:clean');
                 $this->processRunner->restartAll();
                 $this->shouldRestart = true;
                 $running             = false;
@@ -144,6 +169,43 @@ class SrvCommand extends Command
         }
     }
 
+    public function updatestats($print = true, $extended = false)
+    {
+
+
+        $this->stats['uptime'] = round(microtime(true) - LARAVEL_START, 2);
+        if ($this->stats['last_output'] - $this->stats['uptime'] <= 5) return;
+        $this->stats['last_output'] = $this->stats['uptime'];
+        {
+            if ($print)
+            {
+                $this->cursor->moveToPosition($this->cursorpos[0], $this->cursorpos[1]);
+                $this->cursor->clearOutput();
+                if ($extended)
+                {
+                    $header = [ 'type', 'process', 'state', 'cmd', 'cwd', 'timeout', 'forever' ];
+                } else $header = [ 'type', 'process', 'state', 'uptime' ];
+                $rows   = [];
+                $rows[] = [ 'status', 'xconsole', "processes:" . $this->processRunner->runningProcesses, $this->stats['uptime'] ];
+                foreach ($this->processRunner->processes as $p)
+                {
+                    if ($extended)
+
+                    {
+                        $rows[] = [ 'process', $p['title'], $p['state'], $p['cmd'], $p['cwd'], $p['timeout'], 'false' ];
+                    } else $rows[] = [ 'process', $p['title'], $p['state'], $p['last_sign'] ];
+                }
+                foreach ($this->filewatcher->paths as $p)
+                {
+                    $rows[] = $extended ? [ 'watched', $p['path'], '---', '---', date("Y-m-d h:i:s", $p['last_mtime']), 'true' ] : [ "watched", basename($p['path']), 'exists', $p['last_mtime'] ];
+                }
+                $this->table($header, $rows);
+            }
+        }
+
+        $this->lastUpdate = microtime();
+    }
+
     /**
      * Get the console command options.
      *
@@ -151,34 +213,6 @@ class SrvCommand extends Command
      */
     protected function getOptions()
     {
-        return [
-            [
-                'host',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'The host address to serve the application on',
-                Env::get('SERVER_ADDR', '127.0.0.1'),
-            ],
-            [
-                'port',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'The port to serve the application on',
-                Env::get('SERVER_PORT', 8000),
-            ],
-            [
-                'tries',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'The max number of ports to attempt to serve from',
-                10,
-            ],
-            [
-                'demo',
-                null,
-                InputOption::VALUE_NONE,
-                'show demo of theme',
-            ],
-        ];
+        return [ [ 'host', null, InputOption::VALUE_OPTIONAL, 'The host address to serve the application on', Env::get('SERVER_ADDR', '127.0.0.1'), ], [ 'port', null, InputOption::VALUE_OPTIONAL, 'The port to serve the application on', Env::get('SERVER_PORT', 8000), ], [ 'tries', null, InputOption::VALUE_OPTIONAL, 'The max number of ports to attempt to serve from', 10, ], ];
     }
 }
