@@ -3,7 +3,6 @@
 namespace PatrikGrinsvall\XConsole\Commands;
 
 use Exception;
-use Illuminate\Console\Command;
 use Illuminate\Support\Env;
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
 use PatrikGrinsvall\XConsole\ServiceProviders\FileWatcher;
@@ -13,7 +12,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 
-class SrvCommand extends Command
+class SrvCommand extends XCommand
 {
     use HasTheme;
 

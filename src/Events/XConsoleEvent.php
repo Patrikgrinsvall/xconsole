@@ -22,7 +22,7 @@ class XConsoleEvent
     public function __construct(public string $message = "")
     {
         if ($this->message != "") {
-            Log::channel('stderr')->info("ColorfulConsoleEvent::" . $message);
+            Log::channel('stderr')->info("XConsole Event::" . $message);
         }
 
     }

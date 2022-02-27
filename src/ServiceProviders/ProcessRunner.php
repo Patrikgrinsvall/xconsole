@@ -2,6 +2,7 @@
 
 namespace PatrikGrinsvall\XConsole\ServiceProviders;
 
+use Illuminate\Support\Facades\App;
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
 use Symfony\Component\Process\Process;
@@ -54,7 +55,7 @@ class ProcessRunner
         $cls = static::class;
 
         if (!isset(self::$i[$cls])) {
-            self::$i[$cls] = new static();
+            self::$i[$cls] = new static(App::class);
         }
         foreach ($params as $param) {
             if (is_string($param)) self::$i[$cls]->name($param);
@@ -80,7 +81,7 @@ class ProcessRunner
                                      'process'    => null,
         ];
 
-        XConsoleEvent::dispatch("Process will be executed: " . $title);
+        XConsoleEvent::dispatch("Process will be executed: " . $title . ", params" . print_r($process, 1));
 
         return $this;
     }

@@ -49,8 +49,6 @@
         "laravel": {
             "providers": [
                 "PatrikGrinsvall\\XConsole\\ServiceProviders\\XConsoleServiceProvider",
-                "FileWatcherTest",
-                "PatrikGrinsvall\\XConsole\\ServiceProviders\\ProcessRunner",
                 "PatrikGrinsvall\\XConsole\\TrivialTheme\\TrivialThemeServiceProvider"
             ]
         }
