@@ -5,7 +5,7 @@ namespace PatrikGrinsvall\XConsole\Commands;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Console\Concerns\HasParameters;
-use PatrikGrinsvall\XConsole\Traits\HasTheme;
+use LaravelPresets\ColorfulConsole\Traits\HasTheme;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Process\Process;
@@ -13,15 +13,14 @@ use Symfony\Component\Process\Process;
 class CleanCommand extends Command
 {
     use HasParameters;
-    use HasTheme;
 
     /**
      * The console command name.
      *
      * @var string
      */
-    public $name      = 'x:clean';
-    public $signature = "x:clean";
+    public $name = 'x:clean';
+
 
     /**
      * The console command description.
@@ -41,9 +40,6 @@ class CleanCommand extends Command
     {
         #foreach($this->getOptions()
         #       $this->addOption($key)
-        if (!empty($this->options('force'))) {
-            $this->forceFlush();
-        }
 
 
         return CommandAlias::SUCCESS;
@@ -52,30 +48,30 @@ class CleanCommand extends Command
     public function forceFlush()
     {
 
-        $commands[] = [ $this->os_call('rm'),
-                        base_path('bootstrap' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . '*.php'),
-        ];
-        $commands[] = [ $this->os_call('rm'),
-                        storage_path('framework' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . '*.php'),
-        ];
+        $commands[] = [ $this->os_call('rm'), base_path('bootstrap' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . '*.php'), ];
+        $commands[] = [ $this->os_call('rm'), storage_path('framework' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . '*.php'), ];
         try {
             foreach ($commands as $c) {
                 Process::fromShellCommandline($c[0], $c[1])->run(function ($i, $m) use ($c) {
-                    $this->line("returned from:" . $c[0] . ", args:" . implode(" ", $i) . ", type: " . $m . ", msg: " . $m);
+                    $this->line("returned from", $c, $i, $m);
                 });
             }
         } catch (Exception $exception) {
-            $this->line("Error", $exception->getMessage());
+            $this->line("Exception", $exception->getMessage());
 
 
         }
-
-
+        /*
+                ProcessRunner::make([ [ 'php', 'artisan', 'cache:clear' ], [ 'php', 'artisan', 'config:clear' ], [ 'php', 'artisan', 'coute:clear' ],
+                                      [ 'php', 'artisan', 'view:clear' ], [ 'php', 'artisan', 'optimize' ], ]);
+                */
+        /*
         $this->call('cache:clear');
         $this->call('config:clear');
         $this->call('route:clear');
         $this->call('view:clear');
         $this->call('optimize');
+        */
     }
 
     /**
@@ -105,12 +101,6 @@ class CleanCommand extends Command
      */
     protected function getOptions()
     {
-        return [ [ 'force',
-                   'f',
-                   InputOption::VALUE_OPTIONAL,
-                   'force full reflush of all except migrations and seeders',
-                   false,
-                 ],
-        ];
+        return [ [ 'force', 'f', InputOption::VALUE_OPTIONAL, 'force full reflush of all except migrations and seeders', false, ], ];
     }
 }
