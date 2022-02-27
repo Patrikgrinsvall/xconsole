@@ -6,7 +6,7 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Env;
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
-use PatrikGrinsvall\XConsole\ServiceProviders\FileWatcherTest;
+use PatrikGrinsvall\XConsole\ServiceProviders\FileWatcher;
 use PatrikGrinsvall\XConsole\ServiceProviders\ProcessRunner;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
 use Symfony\Component\Console\Input\InputOption;
@@ -64,7 +64,7 @@ class SrvCommand extends Command
         if ($this->option('demo')) $this->demoTheme();
 
         $this->processRunner = ProcessRunner::make();
-        $this->filewatcher   = FileWatcherTest::make(base_path('.env'), callback: function () {
+        $this->filewatcher   = FileWatcher::make(base_path('.env'), callback: function () {
             XConsoleEvent::dispatch("Cleaning cache files and restarting all services");
             $this->call("x:clean");
             $this->call('config:cache');
@@ -85,18 +85,16 @@ class SrvCommand extends Command
     {
         $restartFunction = function () {
             $cmd   = $_SERVER['_'];
-            $paths = [
-                $_SERVER['SCRIPT_FILENAME'],
-                $_SERVER['PWD'] . DIRECTORY_SEPARATOR . 'artisan',
+            $paths = [ $_SERVER['SCRIPT_FILENAME'],
+                       $_SERVER['PWD'] . DIRECTORY_SEPARATOR . 'artisan',
             ];
             foreach ($paths as $path) {
                 if (file_exists($path)) {
                     break;
                 }
             }
-            pcntl_exec($cmd, [
-                $path,
-                "srv",
+            pcntl_exec($cmd, [ $path,
+                               "srv",
             ]);
         };
         register_shutdown_function($restartFunction);
@@ -109,11 +107,10 @@ class SrvCommand extends Command
      */
     protected function cmd()
     {
-        return [
-            (new PhpExecutableFinder)->find(false),
-            '-S',
-            $this->option('host') . ':' . $this->option('port'),
-            base_path('server.php'),
+        return [ (new PhpExecutableFinder)->find(false),
+                 '-S',
+                 $this->option('host') . ':' . $this->option('port'),
+                 base_path('server.php'),
         ];
     }
 
@@ -151,34 +148,29 @@ class SrvCommand extends Command
      */
     protected function getOptions()
     {
-        return [
-            [
-                'host',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'The host address to serve the application on',
-                Env::get('SERVER_ADDR', '127.0.0.1'),
-            ],
-            [
-                'port',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'The port to serve the application on',
-                Env::get('SERVER_PORT', 8000),
-            ],
-            [
-                'tries',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'The max number of ports to attempt to serve from',
-                10,
-            ],
-            [
-                'demo',
-                null,
-                InputOption::VALUE_NONE,
-                'show demo of theme',
-            ],
+        return [ [ 'host',
+                   null,
+                   InputOption::VALUE_OPTIONAL,
+                   'The host address to serve the application on',
+                   Env::get('SERVER_ADDR', '127.0.0.1'),
+                 ],
+                 [ 'port',
+                   null,
+                   InputOption::VALUE_OPTIONAL,
+                   'The port to serve the application on',
+                   Env::get('SERVER_PORT', 8000),
+                 ],
+                 [ 'tries',
+                   null,
+                   InputOption::VALUE_OPTIONAL,
+                   'The max number of ports to attempt to serve from',
+                   10,
+                 ],
+                 [ 'demo',
+                   null,
+                   InputOption::VALUE_NONE,
+                   'show demo of theme',
+                 ],
         ];
     }
 }

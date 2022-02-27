@@ -1,6 +1,6 @@
 <?php
 
-namespace PatrikGrinsvall\XConsole\ServiceProviders;
+namespace PatrikGrinsvall\XConsole\Tests;
 
 use PHPUnit\Framework\TestCase;
 
