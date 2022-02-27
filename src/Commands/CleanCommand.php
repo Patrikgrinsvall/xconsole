@@ -3,13 +3,14 @@
 namespace PatrikGrinsvall\XConsole\Commands;
 
 use Exception;
+use Illuminate\Console\Command;
 use Illuminate\Console\Concerns\HasParameters;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Process\Process;
 
-class CleanCommand extends XCommand
+class CleanCommand extends Command
 {
     use HasParameters;
     use HasTheme;

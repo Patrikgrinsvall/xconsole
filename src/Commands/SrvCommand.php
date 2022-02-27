@@ -3,6 +3,7 @@
 namespace PatrikGrinsvall\XConsole\Commands;
 
 use Exception;
+use Illuminate\Console\Command;
 use Illuminate\Support\Env;
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
 use PatrikGrinsvall\XConsole\ServiceProviders\FileWatcher;
@@ -12,40 +13,35 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 
-class SrvCommand extends XCommand
+class SrvCommand extends Command
 {
     use HasTheme;
 
     public array $processes;
-
+    public       $startTime = 0;
+    #   protected $signature = 'x:srv';
     /**
      * The console command name.
      *
      * @var string
      */
     protected $name = 'x:srv';
-    #   protected $signature = 'x:srv';
-
     /**
      * The console command description.
      *
      * @var string
      */
     protected $description = 'Improvement of laravels default serve command with easier to read output';
-
     /**
      * The current port offset.
      *
      * @var int
      */
-    protected $portOffset = 0;
+    protected $portOffset    = 0;
     private   $processRunner, $filewatcher;
-
-    private $stdin;
-    private $shouldRestart = false;
-
-
-    private $_SERVER;
+    private   $stdin;
+    private   $shouldRestart = false;
+    private   $_SERVER;
 
     /**
      * Execute the console command.
@@ -82,7 +78,9 @@ class SrvCommand extends XCommand
 
     public function registerShutdown()
     {
+        $this->startTime = time();
         $restartFunction = function () {
+
             $cmd   = $_SERVER['_'];
             $paths = [ $_SERVER['SCRIPT_FILENAME'],
                        $_SERVER['PWD'] . DIRECTORY_SEPARATOR . 'artisan',
@@ -92,8 +90,13 @@ class SrvCommand extends XCommand
                     break;
                 }
             }
+            if (time() - $this->startTime < 2) {
+                $msg = 'couldnt even stay up 2 seconds';
+                XConsoleEvent::dispatch($msg);
+                throw new Exception($msg);
+            }
             pcntl_exec($cmd, [ $path,
-                               "srv",
+                               $this->name,
             ]);
         };
         register_shutdown_function($restartFunction);
@@ -119,7 +122,7 @@ class SrvCommand extends XCommand
         error_log("\x1b[38;2;255;100;0mTesting\x1b[0m\e[38;2;155;255;0mTrueColor\e[0m\n");
         $this->stdout('Starting', 'Extended', 'Dev', 'Server', "http://" . Env::get("SERVER_ADDR") . ":" . Env::get('SERVER_PORT'));
         $this->processRunner->run(function ($a, $b) {
-            error_log($a . "-" . $b);
+            #  error_log($a . "-" . $b);
         });
     }
 
@@ -130,7 +133,7 @@ class SrvCommand extends XCommand
 
             $changes = $this->filewatcher->count_changes();
             if ($changes !== 0) {
-                $this->call('z:z');
+                $this->call('x:clean');
                 $this->processRunner->restartAll();
                 $this->shouldRestart = true;
                 $running             = false;

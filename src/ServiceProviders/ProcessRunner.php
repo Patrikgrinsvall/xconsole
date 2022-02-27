@@ -43,8 +43,9 @@ class ProcessRunner
                                                               ],
     ],
     ];
-    private        $signalFilename   = null;
-    private        $runningProcesses = 0;
+
+    private $signalFilename   = null;
+    private $runningProcesses = 0;
 
     /**
      * @factory
@@ -131,6 +132,7 @@ class ProcessRunner
 
     public function run(callable $loopCallback = null): void
     {
+
         $this->each($this->processes, function ($processItem, $processIndex) use ($loopCallback) {
             $process                                   = new Process($processItem['parameters'], $processItem['cwd']);
             $this->processes[$processIndex]['cmd']     = $process->getCommandLine();
@@ -138,11 +140,12 @@ class ProcessRunner
             $this->processes[$processIndex]['process'] = $process;
             $this->runningProcesses++;
 
-
+            $this->startTime = time();
             $process->start(function ($type, $message) use ($process, $processIndex, $processItem, $loopCallback) {
 
                 if ($type == Process::ERR || $type == Process::OUT) {
-                    XConsoleEvent::dispatch('Recieved from ' . $process['title'] . ", $message now running:" . $this->runningProcesses);
+
+                    XConsoleEvent::dispatch('Recieved from ' . $processItem['title'] . ", $message now running:" . $this->runningProcesses);
                     $this->processes[$processIndex]['stderr'] .= "n" . $process->getErrorOutput();
                     $this->processes[$processIndex]['stdout'] .= "n" . $process->getOutput();
                 }
