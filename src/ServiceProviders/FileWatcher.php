@@ -3,9 +3,10 @@
 namespace PatrikGrinsvall\XConsole\ServiceProviders;
 
 use Exception;
+use Illuminate\Support\ServiceProvider;
 use Throwable;
 
-class FileWatcher
+class FileWatcher extends ServiceProvider
 {
 
     private static self $i;
