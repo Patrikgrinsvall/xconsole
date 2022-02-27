@@ -61,11 +61,11 @@ class CleanCommand extends Command
         try {
             foreach ($commands as $c) {
                 Process::fromShellCommandline($c[0], $c[1])->run(function ($i, $m) use ($c) {
-                    $this->suprise("returned from", $c, $i, $m);
+                    $this->line("returned from:" . $c[0] . ", args:" . implode(" ", $i) . ", type: " . $m . ", msg: " . $m);
                 });
             }
         } catch (Exception $exception) {
-            $this->suprise("error", $exception->getMessage());
+            $this->line("Error", $exception->getMessage());
 
 
         }

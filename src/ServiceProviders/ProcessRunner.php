@@ -82,7 +82,7 @@ class ProcessRunner
                                      'process'    => null,
         ];
 
-        XConsoleEvent::dispatch("Process will be executed: " . $title . ", params" . print_r($process, 1));
+        XConsoleEvent::dispatch("Process added: " . $title . ", params:" . implode(" ", $process));
 
         return $this;
     }

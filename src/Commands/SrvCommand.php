@@ -91,7 +91,7 @@ class SrvCommand extends Command
                 }
             }
             if (time() - $this->startTime < 2) {
-                $msg = 'couldnt even stay up 2 seconds';
+                $msg = 'couldnt even stay up 2 seconds, '.error_get_last();
                 XConsoleEvent::dispatch($msg);
                 throw new Exception($msg);
             }
