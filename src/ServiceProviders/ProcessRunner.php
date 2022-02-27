@@ -15,35 +15,32 @@ class ProcessRunner
      */
     private static $i;
     public array   $processes;
-    public array   $processTemplates = [
-        'process_index' => [
-            // title for presentation
-            'title'      => 'echo',
-            'category'   => 'shell',
-            // working dir
-            'cwd'        => ".",
-            // path to executable
-            'executable' => 'echo',
-            // contains out
-            'stdout'     => "",
-            // contains stderr
-            'stderr'     => "",
-            // exitcode
-            'code'       => null,
-            // running, exited, suspended, errored, new
-            'state'      => null,
-            // self explained
-            'pid'        => null,
-            // this is the actually runned cmd after process started
-            'cmd'        => '',
-            'timeout'    => 600,
-            // paramters before process started, one entry per parameter, i think in reality one parameter is one space
-            'parameters' => [
-                'this',
-                'is',
-                'parameters',
-            ],
-        ],
+    public array   $processTemplates = [ 'process_index' => [ // title for presentation
+                                                              'title'      => 'echo',
+                                                              'category'   => 'shell',
+                                                              // working dir
+                                                              'cwd'        => ".",
+                                                              // path to executable
+                                                              'executable' => 'echo',
+                                                              // contains out
+                                                              'stdout'     => "",
+                                                              // contains stderr
+                                                              'stderr'     => "",
+                                                              // exitcode
+                                                              'code'       => null,
+                                                              // running, exited, suspended, errored, new
+                                                              'state'      => null,
+                                                              // self explained
+                                                              'pid'        => null,
+                                                              // this is the actually runned cmd after process started
+                                                              'cmd'        => '',
+                                                              'timeout'    => 600,
+                                                              // paramters before process started, one entry per parameter, i think in reality one parameter is one space
+                                                              'parameters' => [ 'this',
+                                                                                'is',
+                                                                                'parameters',
+                                                              ],
+    ],
     ];
     private        $signalFilename   = null;
     private        $runningProcesses = 0;
@@ -52,11 +49,16 @@ class ProcessRunner
      * @factory
      * @return ProcessRunner
      */
-    public static function make(): ProcessRunner
+    public static function make(string|callable|array ...$params): ProcessRunner
     {
         $cls = static::class;
+
         if (!isset(self::$i[$cls])) {
             self::$i[$cls] = new static();
+        }
+        foreach ($params as $param) {
+            if (is_string($param)) self::$i[$cls]->name($param);
+            if (is_iterable($param) || is_callable($param)) self::$i[$cls]->add("f", $params);
         }
 
         return self::$i[$cls];
@@ -67,16 +69,15 @@ class ProcessRunner
         $i = 0;
         do $i++; while (($title = 'p' . $i . $label) && isset($this->processes[$title]));
 
-        $this->processes[$title] = [
-            'title'      => $label,
-            'parameters' => $process,
-            'stderr'     => '',
-            'stdout'     => '',
-            'state'      => 'new',
-            'cwd'        => $cwd,
-            'executable' => $process[0],
-            'timeout'    => $timeout,
-            'process'    => null,
+        $this->processes[$title] = [ 'title'      => $label,
+                                     'parameters' => $process,
+                                     'stderr'     => '',
+                                     'stdout'     => '',
+                                     'state'      => 'new',
+                                     'cwd'        => $cwd,
+                                     'executable' => $process[0],
+                                     'timeout'    => $timeout,
+                                     'process'    => null,
         ];
 
         XConsoleEvent::dispatch("Process will be executed: " . $title);

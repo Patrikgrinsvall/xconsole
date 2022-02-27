@@ -6,7 +6,7 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Env;
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
-use PatrikGrinsvall\XConsole\ServiceProviders\FileWatcher;
+use PatrikGrinsvall\XConsole\ServiceProviders\FileWatcherTest;
 use PatrikGrinsvall\XConsole\ServiceProviders\ProcessRunner;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
 use Symfony\Component\Console\Input\InputOption;
@@ -64,7 +64,7 @@ class SrvCommand extends Command
         if ($this->option('demo')) $this->demoTheme();
 
         $this->processRunner = ProcessRunner::make();
-        $this->filewatcher   = FileWatcher::make(base_path('.env'), callback: function () {
+        $this->filewatcher   = FileWatcherTest::make(base_path('.env'), callback: function () {
             XConsoleEvent::dispatch("Cleaning cache files and restarting all services");
             $this->call("x:clean");
             $this->call('config:cache');
