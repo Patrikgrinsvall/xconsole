@@ -15,14 +15,13 @@ class HelpCommand extends XCommand
     use HasTheme;
     use HasParameters;
 
+    public    $signature = 'x:help';
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $name = 'x:help';
-
-
+    protected $name      = 'x:help';
     /**
      * The console command description.
      *

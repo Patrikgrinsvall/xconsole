@@ -24,6 +24,7 @@ class SrvCommand extends XCommand
      * @var string
      */
     protected $name = 'x:srv';
+    #   protected $signature = 'x:srv';
 
     /**
      * The console command description.
@@ -60,7 +61,6 @@ class SrvCommand extends XCommand
         $this->_SERVER = $_SERVER['_'];
         $this->registerShutdown();
 
-        if ($this->option('demo')) $this->demoTheme();
 
         $this->processRunner = ProcessRunner::make();
         $this->filewatcher   = FileWatcher::make(base_path('.env'), callback: function () {

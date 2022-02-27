@@ -19,8 +19,8 @@ class CleanCommand extends XCommand
      *
      * @var string
      */
-    public $name = 'x:clean';
-
+    public $name      = 'x:clean';
+    public $signature = "x:clean";
 
     /**
      * The console command description.

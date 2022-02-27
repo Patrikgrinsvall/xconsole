@@ -6,9 +6,7 @@ namespace PatrikGrinsvall\XConsole\ServiceProviders;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use PatrikGrinsvall\XConsole\Commands\CleanCommand;
-use PatrikGrinsvall\XConsole\Commands\HelpCommand;
 use PatrikGrinsvall\XConsole\Commands\InstallCommand;
-use PatrikGrinsvall\XConsole\Commands\SrvCommand;
 
 
 /**
@@ -42,9 +40,9 @@ class XConsoleServiceProvider extends ServiceProvider
             log::debug('Registering service provider for presets');
 
             #$this->commands([ 'srv' => SrvCommand::class ]);
-            $this->commands([ 'x:srv' => SrvCommand::class ]);
-            $this->commands([ 'x' => HelpCommand::class ]);
             #$this->commands([ 'x:help' => HelpCommand::class ]);
+            # $this->commands([ 'x:srv' => SrvCommand::class ]);
+            $this->provides("SrvCommand::class");
             $this->commands([ 'x:clean' => CleanCommand::class ]);
             $this->commands([ 'x:install' => InstallCommand::class ]);
 
