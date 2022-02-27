@@ -2,13 +2,12 @@
 
 namespace PatrikGrinsvall\XConsole\Commands;
 
-use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
 use Symfony\Component\Process\Process;
 
-class InstallCommand extends Command
+class InstallCommand extends XCommand
 {
     use HasTheme;
 
@@ -34,7 +33,7 @@ class InstallCommand extends Command
      */
     public function handle()
     {
-        if ( !$this->check_requirements() ) return $this::FAILURE;
+        if (!$this->check_requirements()) return $this::FAILURE;
 
 
         $this->info('----- FRESH INSTALLATION -----');
@@ -42,7 +41,7 @@ class InstallCommand extends Command
         $this->installDatabase();
         $this->call('db:wipe');
         $this->call('migrate', [ '--seed' => true ]);
-        $this->call('z:z');
+        $this->call('x:clean');
 
         return 0;
     }
@@ -50,7 +49,7 @@ class InstallCommand extends Command
     public function check_requirements()
     {
 
-        if ( config('database.connections.mysql.database', 'not-set') === 'not-set' ) {
+        if (config('database.connections.mysql.database', 'not-set') === 'not-set') {
             return false;
         }
 
@@ -59,10 +58,10 @@ class InstallCommand extends Command
 
     public function installHelpers()
     {
-        if ( !File::exists(base_path('z.bat')) ) {
+        if (!File::exists(base_path('z.bat'))) {
             File::replace(base_path('z.bat'), 'php artisan %*');
         }
-        if ( !File::exists(base_path('z.sh')) ) {
+        if (!File::exists(base_path('z.sh'))) {
             File::replace(base_path('z.sh'), '#!/bin/bash \n' . 'php artisan "$@";');
             #$this->call("chmod +x z.sh");
         }
@@ -70,15 +69,15 @@ class InstallCommand extends Command
 
     public function installDatabase()
     {
-        if ( $this->ask('Do you want to create a database at: ' . config('database.connections.mysql.host') . ', named: ' . config('database.connections.mysql.database') . '(Y/n)', 'Y') ) {
-            if ( !blank(config('database.connections.mysql.password')) ) {
+        if ($this->ask('Do you want to create a database at: ' . config('database.connections.mysql.host') . ', named: ' . config('database.connections.mysql.database') . '(Y/n)', 'Y')) {
+            if (!blank(config('database.connections.mysql.password'))) {
                 $pw = ' -p' . config('database.connections.mysql.password');
             } else $pw = '';
             $cmd = 'mysql -u' . config('database.connections.mysql.username') . $pw . ' -h' . config('database.connections.mysql.host') . " -e 'create database if not exists " . config('database.connections.mysql.database') . ";'";
 
             Process::fromShellCommandline($cmd)->run(function ($type, $out2) use ($cmd) {
 
-                if ( $type == "out" ) {
+                if ($type == "out") {
                     $this->suprise("STDOUT: " . substr($out2, 0, 100));
                 } else $this->error("STDERR: " . $out2);
 
@@ -93,19 +92,19 @@ class InstallCommand extends Command
 
         $code    = false;
         $message = "";
-        foreach ( $file as $key => $f ) {
-            $end   = ( $key == count($file) - 1 ) ? $header : '';
-            $start = ( $key == 0 ) ? $header : '';
+        foreach ($file as $key => $f) {
+            $end   = ($key == count($file) - 1) ? $header : '';
+            $start = ($key == 0) ? $header : '';
 
-            if ( strpos($f, '```') !== false ) {
+            if (strpos($f, '```') !== false) {
                 $code = !$code;
             }
-            if ( $code ) {
-                $message .= ( sprintf('%s<fg=green;bg=black>| <fg=black;bg=bright-cyan>%s</>|</>%s' . "\n", $start, Str::padRight(trim(str_replace('```', '', $f)), 85, ' '), $end) );
-            } elseif ( strpos($f, '#') !== false ) {
-                $message .= ( sprintf('%s<fg=green;bg=black>| <fg=white;bg=black;options=bold>%s</>|</>%s' . "\n", $start, Str::padBoth(trim(str_replace('```', '', $f)), 85, ' '), $end) );
+            if ($code) {
+                $message .= (sprintf('%s<fg=green;bg=black>| <fg=black;bg=bright-cyan>%s</>|</>%s' . "\n", $start, Str::padRight(trim(str_replace('```', '', $f)), 85, ' '), $end));
+            } elseif (strpos($f, '#') !== false) {
+                $message .= (sprintf('%s<fg=green;bg=black>| <fg=white;bg=black;options=bold>%s</>|</>%s' . "\n", $start, Str::padBoth(trim(str_replace('```', '', $f)), 85, ' '), $end));
             } else {
-                $message .= ( sprintf('%s<fg=green;bg=black;options=bold>| <fg=blue;bg=black>%s</>|</>%s' . "\n", $start, Str::padRight(trim(str_replace('```', '', $f)), 85, ' '), $end) );
+                $message .= (sprintf('%s<fg=green;bg=black;options=bold>| <fg=blue;bg=black>%s</>|</>%s' . "\n", $start, Str::padRight(trim(str_replace('```', '', $f)), 85, ' '), $end));
             }
         }
         $this->line($message);

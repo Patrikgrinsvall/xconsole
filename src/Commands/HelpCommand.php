@@ -6,12 +6,11 @@ use Illuminate\Console\Concerns\HasParameters;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
-use Symfony\Component\Console\Command\Command;
 
 /**
  *
  */
-class HelpCommand extends Command
+class HelpCommand extends XCommand
 {
     use HasTheme;
     use HasParameters;
@@ -48,24 +47,24 @@ class HelpCommand extends Command
 
     public function printhelp()
     {
-        $file   = File::lines(__DIR__ . '/../../../README.md');
+        $file   = File::lines(__DIR__ . '/../../README.md');
         $header = sprintf("\n+<fg=blue>%s</>+\n", Str::padBoth(' +++ ', 85, '-'));
 
         $code    = false;
         $message = '';
-        foreach ( $file as $key => $f ) {
-            $end   = ( $key == count($file) - 1 ) ? $header : '';
-            $start = ( $key == 0 ) ? $header : '';
+        foreach ($file as $key => $f) {
+            $end   = ($key == count($file) - 1) ? $header : '';
+            $start = ($key == 0) ? $header : '';
 
-            if ( strpos($f, '```') !== false ) {
+            if (strpos($f, '```') !== false) {
                 $code = !$code;
             }
-            if ( $code ) {
-                $message .= ( sprintf('%s<fg=green;bg=black>| <fg=black;bg=bright-cyan>%s</>|</>%s' . "\n", $start, Str::padRight(trim(str_replace('```', '', $f)), 85, ' '), $end) );
-            } elseif ( strpos($f, '#') !== false ) {
-                $message .= ( sprintf('%s<fg=green;bg=black>| <fg=white;bg=black;options=bold>%s</>|</>%s' . "\n", $start, Str::padBoth(trim(str_replace('```', '', $f)), 85, ' '), $end) );
+            if ($code) {
+                $message .= (sprintf('%s<fg=green;bg=black>| <fg=black;bg=bright-cyan>%s</>|</>%s' . "\n", $start, Str::padRight(trim(str_replace('```', '', $f)), 85, ' '), $end));
+            } elseif (strpos($f, '#') !== false) {
+                $message .= (sprintf('%s<fg=green;bg=black>| <fg=white;bg=black;options=bold>%s</>|</>%s' . "\n", $start, Str::padBoth(trim(str_replace('```', '', $f)), 85, ' '), $end));
             } else {
-                $message .= ( sprintf('%s<fg=green;bg=black;options=bold>| <fg=blue;bg=black>%s</>|</>%s' . "\n", $start, Str::padRight(trim(str_replace('```', '', $f)), 85, ' '), $end) );
+                $message .= (sprintf('%s<fg=green;bg=black;options=bold>| <fg=blue;bg=black>%s</>|</>%s' . "\n", $start, Str::padRight(trim(str_replace('```', '', $f)), 85, ' '), $end));
             }
         }
         $this->line($message);
