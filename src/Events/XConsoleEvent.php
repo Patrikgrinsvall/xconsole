@@ -23,6 +23,7 @@ class XConsoleEvent
     {
         if ($this->message != "") {
             Log::channel('stderr')->info("XConsole Event::" . $message);
+            error_log("Xconsole event:" . $message);
         }
 
     }

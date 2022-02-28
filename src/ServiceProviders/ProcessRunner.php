@@ -4,6 +4,7 @@ namespace PatrikGrinsvall\XConsole\ServiceProviders;
 
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
+use Symfony\Component\Process\PhpProcess;
 use Symfony\Component\Process\Process;
 
 class ProcessRunner
@@ -41,14 +42,27 @@ class ProcessRunner
             self::$i[$cls] = new static();
         }
 
+        if (isset($process)) {
+            self::$i[$cls]->add(null, $process);
+        }
 
         return self::$i[$cls];
     }
 
-    public function add(string $label, callable|array|string $process = null, string $cwd = ".", $timeout = 600)
+    public function add(string $label = null, callable|array|string $process = null, string $cwd = ".", $timeout = 600)
     {
-        $i     = 0;
-        $title = $label;
+        $i = 0;
+
+        $title = $label ?? match (gettype($process)) {
+                "array"  => $process[0],
+                "string" => explode(" ", $process)[0],
+                "object" => function () use ($process) {
+                    $phpProcess = new PhpProcess('<?php $function=' . $process . '; $function();');
+
+                    return $phpProcess;
+                }
+
+            };
         while (isset($this->processes[$title])) $title = $label . '[' . $i++ . ']';
         if (is_callable($process)) {
             /*          self::$i[$cls]->processes["unnamed[" . count(self::$i[$cls]->processes) + 1."]"]
@@ -58,16 +72,35 @@ class ProcessRunner
             die();
         }
         if (is_string($process)) {
-            $this->processes[$title] = [ 'title' => $label, 'parameters' => [], 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process, 'timeout' => $timeout, 'process' => null, ];
+            $process = explode(" ", $process);
+            #$this->processes[$title] = [ 'title' => $label, 'parameters' => [], 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process, 'timeout' => $timeout, 'process' => null, ];
         }
         if (is_array($process)) {
-            $this->processes[$title] = [ 'title' => $label, 'parameters' => $process, 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process[0], 'timeout' => $timeout, 'process' => null, ];
+            $newProcess = new Process($process, $cwd);
+
+            // @formatter:off
+            $this->processes[$title] = [
+                'cmd' => $newProcess->getCommandLine(),
+                'process' => $newProcess,
+                'cwd' => $cwd,
+                'last_sign' => 0,
+                'status' => $newProcess->getStatus(),
+                'title' => $title,
+                'parameters' => array_slice($process,1),
+                'stderr' =>'',
+                'stdout'=>'',
+                'executable' => $process[0],
+                'timeout'=>600
+            ];
+            // @formatter:on
+
+
         }
 
 
         ##$this->processes[$title] = [ 'title' => $label, 'parameters' => $process, 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process[0], 'timeout' => $timeout, 'process' => null, ];
 
-        XConsoleEvent::dispatch("Process will be executed: " . $title);
+        XConsoleEvent::dispatch("Process added: " . $title);
 
         return $this;
     }
@@ -118,22 +151,27 @@ class ProcessRunner
     public function run(callable $loopCallback = null): void
     {
         $this->each($this->processes, function ($processItem, $processIndex) use ($loopCallback) {
-            $process                                     = new Process($processItem['parameters'], $processItem['cwd']);
-            $this->processes[$processIndex]['cmd']       = $process->getCommandLine();
-            $this->processes[$processIndex]['cwd']       = $process->getWorkingDirectory();
-            $this->processes[$processIndex]['process']   = $process;
-            $this->processes[$processIndex]['last_sign'] = 0;
+            $process = $this->processes[$processIndex]['process'];
+
             $this->runningProcesses++;
+            $this->processes[$processIndex]['state'] = $process?->getStatus() ?? 'new';
+            if ($process == null) {
+                dump("was null", $processItem);
+                XConsoleEvent::dispatch("process was null! index:" . $processIndex);
 
-            $this->processes[$processIndex]['state'] = $process->getStatus();
+                return;
+            }
+
             $process->start(function ($type, $message) use ($process, $processIndex, $processItem, $loopCallback) {
-
                 if ($type == Process::ERR || $type == Process::OUT) {
                     $this->processes[$processIndex]['last_sign'] = microtime();
                     $this->processes[$processIndex]['stderr']    .= "\n" . $process->getErrorOutput();
                     $this->processes[$processIndex]['stdout']    .= "\n" . $process->getOutput();
-                }
+                    XConsoleEvent::dispatch('Recieved data:' . $type . ', data:' . $message);
 
+                } else {
+                    XConsoleEvent::dispatch("Recieved unknown data:" . $type . ", data:" . $message);
+                }
                 if ($loopCallback !== null) $loopCallback($type, $message, $process);
                 if ($process->getExitCode() !== null) {
                     $this->processes[$processIndex]['exitcode'] = $process->getExitCode();
@@ -151,9 +189,10 @@ class ProcessRunner
         });
     }
 
-    public function end()
+    public function end($msg = 'All processes ended')
     {
-        error_log("All processes ended in processrunner, restart ? Timeout ? ");
+        XConsoleEvent::dispatch($msg);
+        error_log($msg);
     }
 
 

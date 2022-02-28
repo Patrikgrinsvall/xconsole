@@ -40,11 +40,6 @@ class LovelyLogHandler extends AbstractProcessingHandler
         $exception   = $record['context']['exception'] ?? null;
         $isException = $exception instanceof Throwable;
         /** @noinspection ForgottenDebugOutputInspection */
-<<<<<<< HEAD
-        #dd("writing log from handler");
-=======
-        #  dd("writing log from handler");
->>>>>>> 7dda7a1d8d99fc2885b9b13d64473eaca99feb55
 
     }
 }
