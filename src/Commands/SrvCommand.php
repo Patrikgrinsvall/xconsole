@@ -89,7 +89,8 @@ class SrvCommand extends Command
         $this->filewatcher->add(__FILE__);
 
         $this->processRunner->add('PHP local server', $this->cmd(), public_path());
-        $this->processRunner->add('NPM WATCHER', "npm run watch", public_path());
+        $this->processRunner->add('NPM WATCHER', "npm run watch");
+        $this->processRunner->add('PAPERBITS WATCHER', 'npm run paper:build');
         $this->serve();
 
         $this->loop();
@@ -132,6 +133,7 @@ class SrvCommand extends Command
         $this->startTime = microtime();
         $this->line('Starting  Extended Dev Server on: ', Env::get('SERVER_PROTO', 'http'), '://', Env::get("SERVER_ADDR"), ':', Env::get('SERVER_PORT'));
         $this->processRunner->run(function ($type, $msg) {
+            error_log("errrlog, type:$type message: $msg");
             XConsoleEvent::dispatch($this->color(strtoupper($type)) . ' | ' . $msg);
         });
     }

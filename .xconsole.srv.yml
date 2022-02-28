@@ -1,0 +1,23 @@
+command: x:srv
+watch:
+    envfile:
+        - .env
+        run:
+            - artisan
+            - npm
+    package:
+        - package.json
+        - composer.json
+        run:
+            - composer_install
+            - npm
+        restart:
+            - artisan
+processes:
+    artisan:
+        - php artisan srv
+    npm:
+        - npm run watch
+        - npm run paper:build
+    composer:
+        - composer install
