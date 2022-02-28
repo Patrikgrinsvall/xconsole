@@ -31,7 +31,7 @@
             "PatrikGrinsvall\\XConsole\\": "src"
         }
     },
-    "version": "0.0.4",
+    "version": "dev-master",
     "scripts": {
         "publish": "@php artisan vendor:publish --provider PatrikGrinsvall\\XConsole\\TrivialTheme\\TrivialThemeServiceProvider",
         "pr": "echo 'creating pr using default ssh-provider'",
