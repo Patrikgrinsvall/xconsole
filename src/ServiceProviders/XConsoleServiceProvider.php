@@ -21,6 +21,21 @@ class XConsoleServiceProvider extends ServiceProvider
     public function register()
     {
         if ($this->app->runningInConsole()) {
+            /*
+             * WIP
+                        Artisan::command('x:tag', function () {
+                            ProcessRunner::make(function () {
+                                $composerFilename = dirname(__FILE__) . DIRECTORY_SEPARATOR . '/../../composer.json';
+                                $composerJson     = json_decode(file_get_contents($composerFilename), true);
+                                if (array_key_exists('version', $composerJson)) {
+                                    $version = '0.0.' . (int)Str::afterLast('.', $composerJson['version']) + 1;
+                                }
+                                File::copy($composerFilename, $composerFilename . date("his") . ".bak");
+                                $data = json_encode($composerJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+                                file_put_contents($composerFilename, $data);
+                            })->run();
+                        });
+            */
             $this->commands([ 'x:srv' => SrvCommand::class ]);
             $this->commands([ 'x:help' => HelpCommand::class ]);
             $this->commands([ 'x:clean' => CleanCommand::class ]);

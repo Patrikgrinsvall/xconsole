@@ -4,7 +4,6 @@ namespace PatrikGrinsvall\XConsole\ServiceProviders;
 
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
-use Symfony\Component\Process\PhpProcess;
 use Symfony\Component\Process\Process;
 
 class ProcessRunner
@@ -43,60 +42,70 @@ class ProcessRunner
         }
 
         if (isset($process)) {
-            self::$i[$cls]->add(null, $process);
+            // an array with processes
+            if (is_array($process) && is_array($process[0])) {
+                error_log('Process is an array containing many commands');
+
+            }
+            if (is_array($process) && is_string($process[0])) {
+                error_log("Process is an array containing single command");
+                $process = [ $process ];
+            }
+            if (is_string($process)) {
+                error_log('Process is single command string');
+                $process = [ explode(" ", $process) ];
+            }
+            if (is_callable($process)) {
+                $process = [ $process ];
+            }
+            foreach ($process as $proc) {
+                self::$i[$cls]->add(null, $proc);
+            }
         }
 
         return self::$i[$cls];
     }
 
-    public function add(string $label = null, callable|array|string $process = null, string $cwd = ".", $timeout = 600)
+    public function add(string $label = null, object|array|string $process = null, string $cwd = ".", $timeout = 600)
     {
         $i = 0;
 
         $title = $label ?? match (gettype($process)) {
                 "array"  => $process[0],
                 "string" => explode(" ", $process)[0],
-                "object" => function () use ($process) {
-                    $phpProcess = new PhpProcess('<?php $function=' . $process . '; $function();');
-
-                    return $phpProcess;
-                }
-
+                "object" => 'object'
             };
         while (isset($this->processes[$title])) $title = $label . '[' . $i++ . ']';
         if (is_callable($process)) {
-            /*          self::$i[$cls]->processes["unnamed[" . count(self::$i[$cls]->processes) + 1."]"]
-                      = [ 'title' => $label, 'parameters' => $process, 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process[0], 'timeout' => $timeout, 'process' => null, ];
-          */
-            error_log("NOT SUPPORTED TO ADD SYMFONY PROCESS YET");
-            die();
+            die("NOT SUPPORTED TO ADD CLOSURES");
+            ##$newProcess = new PhpProcess('<?php $function=' . $process . '; $function();');
+
+            error_log("NOT SUPPORTED");
+
         }
         if (is_string($process)) {
-            $process = explode(" ", $process);
+            $process    = explode(" ", $process);
+            $newProcess = new Process($process, $cwd);
             #$this->processes[$title] = [ 'title' => $label, 'parameters' => [], 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process, 'timeout' => $timeout, 'process' => null, ];
         }
         if (is_array($process)) {
             $newProcess = new Process($process, $cwd);
-
-            // @formatter:off
-            $this->processes[$title] = [
-                'cmd' => $newProcess->getCommandLine(),
-                'process' => $newProcess,
-                'cwd' => $cwd,
-                'last_sign' => 0,
-                'status' => $newProcess->getStatus(),
-                'title' => $title,
-                'parameters' => array_slice($process,1),
-                'stderr' =>'',
-                'stdout'=>'',
-                'executable' => $process[0],
-                'timeout'=>600
-            ];
-            // @formatter:on
-
-
         }
-
+        // @formatter:off
+        $this->processes[$title] = [
+            'cmd' => $newProcess->getCommandLine(),
+            'process' => $newProcess,
+            'cwd' => $cwd,
+            'last_sign' => 0,
+            'status' => $newProcess->getStatus(),
+            'title' => $title,
+            'parameters' => array_slice($process,1),
+            'stderr' =>'',
+            'stdout'=>'',
+            'executable' => $newProcess->getCommandLine(),
+            'timeout'=>600
+        ];
+        // @formatter:on
 
         ##$this->processes[$title] = [ 'title' => $label, 'parameters' => $process, 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process[0], 'timeout' => $timeout, 'process' => null, ];
 
