@@ -33,24 +33,39 @@ class ProcessRunner
      * @factory
      * @return ProcessRunner
      */
-    public static function make(): ProcessRunner
+    public static function make(callable|Process|null|string $process = null): ProcessRunner
     {
         $cls = static::class;
 
-        if (!isset(self::$i[$cls]))
-        {
+        if (!isset(self::$i[$cls])) {
             self::$i[$cls] = new static();
         }
+
 
         return self::$i[$cls];
     }
 
-    public function add(string $label, array $process = null, string $cwd = ".", $timeout = 600)
+    public function add(string $label, callable|array|string $process = null, string $cwd = ".", $timeout = 600)
     {
-        $i = 0;
-        do $i++; while (($title = 'p' . $i . $label) && isset($this->processes[$title]));
+        $i     = 0;
+        $title = $label;
+        while (isset($this->processes[$title])) $title = $label . '[' . $i++ . ']';
+        if (is_callable($process)) {
+            /*          self::$i[$cls]->processes["unnamed[" . count(self::$i[$cls]->processes) + 1."]"]
+                      = [ 'title' => $label, 'parameters' => $process, 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process[0], 'timeout' => $timeout, 'process' => null, ];
+          */
+            error_log("NOT SUPPORTED TO ADD SYMFONY PROCESS YET");
+            die();
+        }
+        if (is_string($process)) {
+            $this->processes[$title] = [ 'title' => $label, 'parameters' => [], 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process, 'timeout' => $timeout, 'process' => null, ];
+        }
+        if (is_array($process)) {
+            $this->processes[$title] = [ 'title' => $label, 'parameters' => $process, 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process[0], 'timeout' => $timeout, 'process' => null, ];
+        }
 
-        $this->processes[$title] = [ 'title' => $label, 'parameters' => $process, 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process[0], 'timeout' => $timeout, 'process' => null, ];
+
+        ##$this->processes[$title] = [ 'title' => $label, 'parameters' => $process, 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process[0], 'timeout' => $timeout, 'process' => null, ];
 
         XConsoleEvent::dispatch("Process will be executed: " . $title);
 
@@ -63,15 +78,12 @@ class ProcessRunner
             XConsoleEvent::dispatch('Stopping: ' . $process['title']);
             $process['process']->stop();
         });
-        do
-        {
+        do {
             XConsoleEvent::dispatch('Waiting for processes to terminate ');
-            foreach ($this->processes as $i => $p)
-            {
+            foreach ($this->processes as $i => $p) {
                 /** @var Process $process */
                 $process = $p['process'];
-                if (isset($process) && $process->isRunning() === false)
-                {
+                if (isset($process) && $process->isRunning() === false) {
                     XConsoleEvent::dispatch('Terminated: ' . $process['title']);
                     $this->runningProcesses--;
                     unset($this->processes[$i]['process']);
@@ -84,10 +96,8 @@ class ProcessRunner
 
     public function each(iterable $items, callable $callback)
     {
-        foreach ($items as $processIndex => $process)
-        {
-            if (is_callable($callback))
-            {
+        foreach ($items as $processIndex => $process) {
+            if (is_callable($callback)) {
                 $callback($process, $processIndex);
             }
         }
@@ -95,8 +105,7 @@ class ProcessRunner
 
     public function restartAll()
     {
-        if ($this->runningProcesses > 0)
-        {
+        if ($this->runningProcesses > 0) {
             XConsoleEvent::dispatch('Restarting all ');
             $this->each($this->processes, function ($process, $processIndex) {
                 $process['process']->stop();
@@ -119,24 +128,20 @@ class ProcessRunner
             $this->processes[$processIndex]['state'] = $process->getStatus();
             $process->start(function ($type, $message) use ($process, $processIndex, $processItem, $loopCallback) {
 
-                if ($type == Process::ERR || $type == Process::OUT)
-                {
+                if ($type == Process::ERR || $type == Process::OUT) {
                     $this->processes[$processIndex]['last_sign'] = microtime();
                     $this->processes[$processIndex]['stderr']    .= "\n" . $process->getErrorOutput();
                     $this->processes[$processIndex]['stdout']    .= "\n" . $process->getOutput();
                 }
 
                 if ($loopCallback !== null) $loopCallback($type, $message, $process);
-                if ($process->getExitCode() !== null)
-                {
+                if ($process->getExitCode() !== null) {
                     $this->processes[$processIndex]['exitcode'] = $process->getExitCode();
                     $this->processes[$processIndex]['state']    = $process->getStatus();
-                    if ($process->isTerminated())
-                    {
+                    if ($process->isTerminated()) {
                         $this->runningProcesses--;
                         XConsoleEvent::dispatch('Terminated: ' . $processItem['title'] . ", processes: " . $this->runningProcesses);
-                        if ($this->runningProcesses == 0)
-                        {
+                        if ($this->runningProcesses == 0) {
                             $this->end();
                         }
                     }
@@ -155,12 +160,9 @@ class ProcessRunner
     public function printstats()
     {
         $stats = [];
-        foreach ($this->processes as $process)
-        {
-            foreach ($process as $key => $string)
-            {
-                if (is_string($string))
-                {
+        foreach ($this->processes as $process) {
+            foreach ($process as $key => $string) {
+                if (is_string($string)) {
                     $stats[$key] = $string;
                 }
             }
