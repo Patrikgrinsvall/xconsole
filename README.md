@@ -1,60 +1,20 @@
-# SilentRidge App Starter
+# XConsole
 
-Note! Dont take this to seruous, its WIP!
 
-Provides extensions to laravel, especially console app, but also some presets
-for frontend.
+## PHP dev server 
+Contains:
+- Shortcuts to artisan, symfony and other php/node-js based console commands
+- File watcher 
+- Process runner/manager with support for multiple processes and their output
+- Laravel local dev server
+- Some slight color output variations
+- Helpers for setting up easier command line debug tools
+- Logger helper for better console and phpstorm log watcher.
 
-There are plenty of commands in order to get started quickly. For example; when
-running the ´starter´ command, also the shortcut tool for artisan, "z"
-is added to laravel base folder. On linux its z.sh and on windows its z.bat and
-it can be used in place of all artisan commands. So, there are at least two ways
-to run each command and therefore some are listed twice below.
+## Install
+- Only `composer require patrikgrinsvall/xconsole` should be needed, anything else is a bug
+- Show built in commands with `./x x:help`, `x.bat x:help`, `x.sh x:help`, `php artisan x:help`, `php x:help`   
 
-# Command list
-
-## 1. Installation and helpers
-
-```
-+-----------------------------------------------------------------
-|       command                         description
-+-----------------------------------------------------------------
-|- php artisan starter:help             Run installation and show this help
-|- z.sh starter:help                    same as above   
-+-----------------------------------------------------------------
-```
-
-All of the above makes initial installation and migrates, creates and seeds
-database. It will error if .env is not setup correct.
-
-## 2. Frontend scripts
-
-```
-+-----------------------------------------------------------------
-|       command                         description
-+-----------------------------------------------------------------
-|- composer run install             Run installation of ALL frontend deps.
-|- npm run scraper:build            build the scraper frontend
-|- npm run scraper:prod             compile scraper frontend production
-|- npm run sock:build               build the update server frontend
-|- npm run sock:prod               build the update server for production      
-|- npm run build-tryer              build nova component
-+-----------------------------------------------------------------                              
-```
-
-All of the above commands are related to building the frontend.
-
-## 3. Run time helpers
-
-```
-+-----------------------------------------------------------------
-|       command                         description
-+-----------------------------------------------------------------
-|- php artisan z:z                  Super cache cleaner, views, configs, routes etc.
-|                                   and also restart server and queue etc.
-|- z.sh z:z                         same as above
-|- composer run legacy              Runs local webserver with old scraper
-+-----------------------------------------------------------------
-                              
-```
-
+## Usage
+- Create Installation, migration, and other customizable setup helpers with `x:install`
+- Cusomize dev server by extending Commands/SrvCommand (to be improved with recepies)
