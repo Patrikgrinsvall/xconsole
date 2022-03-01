@@ -9,6 +9,7 @@ use PatrikGrinsvall\XConsole\Commands\HelpCommand;
 use PatrikGrinsvall\XConsole\Commands\InstallCommand;
 use PatrikGrinsvall\XConsole\Commands\RecordCommand;
 use PatrikGrinsvall\XConsole\Commands\SrvCommand;
+use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
 
 
 /**
@@ -42,6 +43,8 @@ class XConsoleServiceProvider extends ServiceProvider
             $this->commands([ 'x:clean' => CleanCommand::class ]);
             $this->commands([ 'x:install' => InstallCommand::class ]);
             $this->commands([ 'x:record' => RecordCommand::class ]);
+            $this->app->register(ProcessRunner::class);
+            $this->app->register(FileWatcher::class)
         } else {
             logger("not running in con");
         }
@@ -54,6 +57,6 @@ class XConsoleServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-
+        XConsoleEvent::dispatch("Booting Xconsole");
     }
 }

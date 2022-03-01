@@ -40,8 +40,6 @@
     },
     "version": "dev-master",
     "scripts": {
-        "publish": "@php artisan vendor:publish --provider PatrikGrinsvall\\XConsole\\TrivialTheme\\TrivialThemeServiceProvider",
-        "pr": "echo 'creating pr using default ssh-provider'",
         "tag": "echo tagging a new release",
         "post-root-package-install": [
             "@composer run publish"
