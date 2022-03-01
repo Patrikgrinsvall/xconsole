@@ -1,5 +1,5 @@
 <?php
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace PatrikGrinsvall\XConsole\ServiceProviders;
 
@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use PatrikGrinsvall\XConsole\Commands\CleanCommand;
 use PatrikGrinsvall\XConsole\Commands\HelpCommand;
 use PatrikGrinsvall\XConsole\Commands\InstallCommand;
+use PatrikGrinsvall\XConsole\Commands\RecordCommand;
 use PatrikGrinsvall\XConsole\Commands\SrvCommand;
 
 
@@ -20,7 +21,7 @@ class XConsoleServiceProvider extends ServiceProvider
 
     public function register()
     {
-        if ($this->app->runningInConsole()) {
+        if ( $this->app->runningInConsole() ) {
             /*
              * WIP
                         Artisan::command('x:tag', function () {
@@ -40,6 +41,7 @@ class XConsoleServiceProvider extends ServiceProvider
             $this->commands([ 'x:help' => HelpCommand::class ]);
             $this->commands([ 'x:clean' => CleanCommand::class ]);
             $this->commands([ 'x:install' => InstallCommand::class ]);
+            $this->commands([ 'x:record' => RecordCommand::class ]);
         } else {
             logger("not running in con");
         }
