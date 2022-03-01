@@ -196,8 +196,16 @@ class SrvCommand extends Command
                     $rows[] = [ 'process', $p[ 'title' ], $p[ 'state' ], $p[ 'cmd' ], $p[ 'cwd' ], $p[ 'timeout' ], 'false' ];
                 } else $rows[] = [ 'process', $p[ 'title' ], $p[ 'state' ], $p[ 'last_sign' ] ];
             }
+<<<<<<< HEAD
             foreach ( $this->filewatcher->paths as $p ) {
                 $rows[] = $extended ? [ 'watched', $p[ 'path' ], '---', '---', date("Y-m-d h:i:s", $p[ 'last_mtime' ]), 'true' ] : [ "watched", basename($p[ 'path' ]), 'exists', $p[ 'last_mtime' ] ];
+=======
+            foreach ($this->filewatcher->paths as $p) {
+                $rows[] = $extended ? [ 'watched', $p['path'], '---', '---', date("Y-m-d h:i:s", $p['last_mtime']), 'true' ] : [ "watched",
+                                                                                                                                 basename($p['path']),
+                                                                                                                                 'exists',
+                                                                                                                                 $p['last_mtime'] ];
+>>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
             }
             $this->table($header, $rows);
         }
@@ -213,6 +221,9 @@ class SrvCommand extends Command
      */
     protected function getOptions()
     {
-        return [ [ 'host', null, InputOption::VALUE_OPTIONAL, 'The host address to serve the application on', Env::get('SERVER_ADDR', '127.0.0.1'), ], [ 'port', null, InputOption::VALUE_OPTIONAL, 'The port to serve the application on', Env::get('SERVER_PORT', 8000), ], [ 'tries', null, InputOption::VALUE_OPTIONAL, 'The max number of ports to attempt to serve from', 10, ], ];
+        return [ [ 'host', null, InputOption::VALUE_OPTIONAL, 'The host address to serve the application on', Env::get('SERVER_ADDR', '127.0.0.1'), ],
+                 [ 'run', null, InputOption::VALUE_OPTIONAL, 'a file with existing processes to run, like a recepie', '../.xconsole.lastrun.yml', ],
+                 [ 'port', null, InputOption::VALUE_OPTIONAL, 'The port to serve the application on', Env::get('SERVER_PORT', 8000), ],
+                 [ 'tries', null, InputOption::VALUE_OPTIONAL, 'The max number of ports to attempt to serve from', 10, ], ];
     }
 }

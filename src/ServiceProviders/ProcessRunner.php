@@ -3,13 +3,12 @@
 namespace PatrikGrinsvall\XConsole\ServiceProviders;
 
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
-use PatrikGrinsvall\XConsole\Traits\HasTheme;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 
 class ProcessRunner
 {
-    use HasTheme;
+
 
     /**
      * @var null
@@ -19,15 +18,26 @@ class ProcessRunner
     public         $app;
     public         $useStreams       = true;
     public array   $processTemplates = [ 'process_index' => [ // title for presentation
-                                                              'title'      => 'echo', 'category' => 'shell', // working dir
-                                                              'cwd'        => ".", // path to executable
-                                                              'executable' => 'echo', // contains out
-                                                              'stdout'     => "", // contains stderr
-                                                              'stderr'     => "", // exitcode
-                                                              'code'       => null, // running, exited, suspended, errored, new
-                                                              'state'      => null, // self explained
-                                                              'pid'        => null, // this is the actually runned cmd after process started
-                                                              'cmd'        => '', 'timeout' => 600, // paramters before process started, one entry per parameter, i think in reality one parameter is one space
+                                                              'title'      => 'echo',
+                                                              'category'   => 'shell',
+                                                              // working dir
+                                                              'cwd'        => ".",
+                                                              // path to executable
+                                                              'executable' => 'echo',
+                                                              // contains out
+                                                              'stdout'     => "",
+                                                              // contains stderr
+                                                              'stderr'     => "",
+                                                              // exitcode
+                                                              'code'       => null,
+                                                              // running, exited, suspended, errored, new
+                                                              'state'      => null,
+                                                              // self explained
+                                                              'pid'        => null,
+                                                              // this is the actually runned cmd after process started
+                                                              'cmd'        => '',
+                                                              'timeout'    => 600,
+                                                              // paramters before process started, one entry per parameter, i think in reality one parameter is one space
                                                               'parameters' => [ 'this', 'is', 'parameters', ], ], ];
     public         $runningProcesses = 0;
 
@@ -43,7 +53,20 @@ class ProcessRunner
             self::$i[ $cls ] = new static();
         }
 
+<<<<<<< HEAD
         if ( isset($process) ) {
+=======
+        if (isset($process)) {
+            if (is_string($process)) {
+                if (file_exists($process)) {
+                    self::$i[$cls]->loadRunFile($process);
+
+                    return self::$i[$cls];
+                } else {
+                    $process = [ explode(' ', $process) ];
+                }
+            }
+>>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
             // an array with processes
             if ( is_array($process) && is_array($process[ 0 ]) ) {
                 error_log('Process is an array containing many commands');
@@ -53,11 +76,16 @@ class ProcessRunner
                 error_log("Process is an array containing single command");
                 $process = [ $process ];
             }
+<<<<<<< HEAD
             if ( is_string($process) ) {
                 error_log('Process is single command string');
                 $process = [ explode(" ", $process) ];
             }
             if ( is_callable($process) ) {
+=======
+
+            if (is_callable($process)) {
+>>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
                 $process = [ $process ];
             }
             foreach ( $process as $proc ) {
@@ -66,6 +94,18 @@ class ProcessRunner
         }
 
         return self::$i[ $cls ];
+    }
+
+    public function loadRunFile($file = "../.xconsole.lastrun.yml")
+    {
+        if (file_exists($file)) {
+            $processlist['processlist'] = Yaml::parse(file_get_contents($file));
+
+        }
+        foreach ($processlist['processlist'] as $p) {
+            $out[] = [ $p['title'], $p['cmd'], $p['cwd'] ];
+            self::$i[static::class]->add($p['title'], $p['cmd'], $p['cwd']);
+        }
     }
 
     public function add(string $label = null, object|array|string $process = null, string $cwd = ".", $timeout = 600)
@@ -81,8 +121,6 @@ class ProcessRunner
         if ( is_callable($process) ) {
             die("NOT SUPPORTED TO ADD CLOSURES");
             ##$newProcess = new PhpProcess('<?php $function=' . $process . '; $function();');
-
-            error_log("NOT SUPPORTED");
 
         }
         if ( is_string($process) ) {
@@ -106,7 +144,11 @@ class ProcessRunner
             'stdout'=>'',
             'executable' => $newProcess->getCommandLine(),
             'timeout'=>600,
+<<<<<<< HEAD
             'pid'=>0
+=======
+            'restart' => false // @todo - add support for 0=forever, x=amount of times
+>>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
         ];
         // @formatter:on
 
@@ -159,14 +201,31 @@ class ProcessRunner
 
     public function restartAll()
     {
+<<<<<<< HEAD
         if ( $this->runningProcesses > 0 ) {
             XConsoleEvent::dispatch('Restarting all ');
             $this->each($this->processes, function ($process, $processIndex) {
                 $process[ 'process' ]->stop();
                 $process[ 'process' ]->restart();
                 unset($this->processes[ $processIndex ][ 'process' ]);
+=======
+        $this->dumpProcesses();
+        if ($this->runningProcesses > 0) {
+            XConsoleEvent::dispatch('Restarting all ');
+            $this->each($this->processes, function ($process, $processIndex) {
+                //$process['process']->stop();
+                $process['process']->restart();
+                unset($this->processes[$processIndex]['process']);
+>>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
             });
         }
+    }
+
+    public function dumpProcesses()
+    {
+        $filename = "../.xconsole.lastrun.yaml";
+        $yaml     = Yaml::dump([ 'processlist' => $this->processes ]);
+        file_put_contents($filename, $yaml);
     }
 
     public function run(callable $loopCallback = null): void
@@ -184,12 +243,21 @@ class ProcessRunner
             }
             /** @var Process $process */
             $process->start(function ($type, $message) use ($process, $processIndex, $processItem, $loopCallback) {
+<<<<<<< HEAD
                 XConsoleEvent::dispatch('Recieved data:' . $type . ', data:' . $message);
                 $this->processes[ $processIndex ][ 'pid' ] = $process->getPid();
                 if ( $type == Process::ERR || $type == Process::OUT ) {
                     $this->processes[ $processIndex ][ 'last_sign' ] = microtime();
                     $this->processes[ $processIndex ][ 'stderr' ]    .= $process->getErrorOutput();
                     $this->processes[ $processIndex ][ 'stdout' ]    .= $process->getOutput();
+=======
+                $this->dumpProcesses();
+                if ($type == Process::ERR || $type == Process::OUT) {
+                    $this->processes[$processIndex]['last_sign'] = microtime();
+                    $this->processes[$processIndex]['stderr']    .= "\n" . $process->getErrorOutput();
+                    $this->processes[$processIndex]['stdout']    .= "\n" . $process->getOutput();
+                    XConsoleEvent::dispatch('Recieved data:' . $type . ', data:' . $message);
+>>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
 
                 }
                 if ( $loopCallback !== null ) $loopCallback($type, $message, $process);
