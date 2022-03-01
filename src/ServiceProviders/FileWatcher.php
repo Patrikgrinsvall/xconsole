@@ -15,6 +15,7 @@ class FileWatcher
     protected array     $paths;                                    // internal metadata, array with paths and their modified time
     private array       $excluded       = [ '.', '..', '.git', ];
     private int         $lastCheckTime  = 0;
+
     /*
         public function __construct($paths = null, $gracetime = 0)
         {
@@ -45,7 +46,7 @@ class FileWatcher
      */
     public static function make(string|array $path = null, callable $callback = null): static
     {
-        if ( !isset(self::$i) ) {
+        if (!isset(self::$i)) {
             self::$i            = new static();
             self::$i->graceTime = 0;
         }
@@ -68,12 +69,12 @@ class FileWatcher
         #$last_mtime = filemtime($path);
         #$this->paths[ $path ] = [ 'path' => $path, 'last_mtime' => $last_mtime, 'callback' => $callback, ];
 
-        if ( is_null($paths) ) return $this;
+        if (is_null($paths)) return $this;
         $pathsToAdd = is_string($paths) ? [ $paths ] : $paths;
-        foreach ( $pathsToAdd as $path ) {
+        foreach ($pathsToAdd as $path) {
             clearstatcache(false, $path);
-            foreach ( $this->get_files($path) as $file ) {
-                $this->paths[ $file ] = [ 'path' => $file, 'last_mtime' => filemtime($file), 'callback' => $callback, ];
+            foreach ($this->get_files($path) as $file) {
+                $this->paths[$file] = [ 'path' => $file, 'last_mtime' => filemtime($file), 'callback' => $callback, ];
             }
         }
 
@@ -90,12 +91,12 @@ class FileWatcher
     public function get_files(string|null $path): array
     {
         $info  = new SplFileInfo($path);
-        $files = match ( $info->getType() ) {
+        $files = match ($info->getType()) {
             "dir"  => array_filter(scandir($path), function ($file) {
-                if ( in_array($file, $this->excluded) ) {
+                if (in_array($file, $this->excluded)) {
                     return false;
                 }
-                if ( is_file($file) ) return true;
+                if (is_file($file)) return true;
 
                 return false;
             }),
@@ -123,8 +124,8 @@ class FileWatcher
     public function stats(): array
     {
         $output = [];
-        foreach ( $this->paths as $path ) {
-            $output = [ 'path' => $path[ 'path' ], 'last_mtime' => date('ymd h:i:s', $path[ 'last_mtime' ]), ];
+        foreach ($this->paths as $path) {
+            $output = [ 'path' => $path['path'], 'last_mtime' => date('ymd h:i:s', $path['last_mtime']), ];
         }
 
         return $output;
@@ -137,7 +138,7 @@ class FileWatcher
     {
 
 
-        foreach ( $paths as $path ) {
+        foreach ($paths as $path) {
             $this->add($path);
         }
 
@@ -149,16 +150,16 @@ class FileWatcher
     {
 
         $changes = null;
-        foreach ( $this->paths as $path ) {
-            if ( $this->changed($path[ 'path' ]) ) {
-                $changes[] = $path[ 'path' ];
+        foreach ($this->paths as $path) {
+            if ($this->changed($path['path'])) {
+                $changes[] = $path['path'];
             }
 
         }
-        if ( !isset($changes) || count($changes) == 0 ) return [];
+        if (!isset($changes) || count($changes) == 0) return [];
 
 
-        return count($changes) == 1 ? $changes[ 0 ] : implode("\n", $changes);
+        return count($changes) == 1 ? $changes[0] : implode("\n", $changes);
 
     }
 
@@ -172,62 +173,54 @@ class FileWatcher
     public function changed(string $path)
     {
 
-        if ( !isset($this->paths[ $path ]) ) {
+        if (!isset($this->paths[$path])) {
 
             return 0;
         }
-        $last = $this->paths[ $path ][ 'last_mtime' ];
+        $last = $this->paths[$path]['last_mtime'];
         clearstatcache(false, $path);
         $stat = stat($path);
-        $now  = $stat[ 'mtime' ];
+        $now  = $stat['mtime'];
 
-        if ( $last != $now ) {
-            $this->paths[ $path ][ 'last_mtime' ] = $now;
-            $cb                                   = $this->paths[ $path ][ 'callback' ] ?? function ($item) {
+
+        $last = $this->paths[$path]['last_mtime'];
+
+        if (file_exists($path)) {
+            clearstatcache(true, $path);
+            $now = filemtime($path);
+        } else return 1;
+
+        if ($last != $now) {
+            $this->paths[$path]['last_mtime'] = $now;
+            $cb                               = $this->paths[$path]['callback'] ?? function ($item) {
                     return false;
 
-                    $last = $this->paths[ $path ][ 'last_mtime' ];
-
-                    if ( file_exists($path) ) {
-                        clearstatcache(true, $path);
-                        $now = filemtime($path);
-                    } else return 1;
-
-                    if ( $last != $now ) {
-                        $this->paths[ $path ][ 'last_mtime' ] = $now;
-                        $cb                                   = $this->paths[ $path ][ 'callback' ] ?? function ($item) {
-                                return 0;
-
-                            };
-
-                        $cb($path);
-
-                        return 1;
-                    }
-
-                    return 0;
-
                 };
+
+            $cb($path);
+
+            return 1;
         }
+
+        return 0;
+
     }
+
 
     public function getGrace()
     {
 
-        $changes = 0;
-        foreach ( $this->paths as $path ) {
-            $changes = $changes + $this->changed($path[ 'path' ]);
 
-            return $this->graceTime;
-        }
+        return $this->graceTime;
+
     }
 
     public function get_changes()
     {
         $changes = [];
-        foreach ( $this->paths as $path ) {
-            if ( $this->changed($path[ 'path' ]) ) {
-                $changes[] = $path[ 'path' ];
+        foreach ($this->paths as $path) {
+            if ($this->changed($path['path'])) {
+                $changes[] = $path['path'];
             }
         }
 
@@ -243,15 +236,15 @@ class FileWatcher
      */
     public function count_changes()
     {
-        if ( $this->grace() ) {
+        if ($this->grace()) {
             $this->throw_dispatch($this->grace(), 'RuntimeException, graceperiod', $this->grace());
 
             return 0;
         }
         $changes = 0;
 
-        foreach ( $this->paths as $path ) {
-            $changes = $changes + $this->changed($path[ 'path' ]);
+        foreach ($this->paths as $path) {
+            $changes = $changes + $this->changed($path['path']);
         }
 
         return $changes;
@@ -264,16 +257,16 @@ class FileWatcher
      */
     public function grace(int $time = 5): bool
     {
-
-        if ( $time != 5 ) $this->graceTime = $time;
-        if ( $this->lastCheckTime == 0 ) {
+        return false;
+        if ($time != 5) $this->graceTime = $time;
+        if ($this->lastCheckTime == 0) {
             $this->lastCheckTime = time();
 
             return false;
         }
 
 
-        return ( $this->graceTime + $this->lastCheckTime > time() );
+        return ($this->graceTime + $this->lastCheckTime > time());
     }
 
     /**
@@ -289,7 +282,7 @@ class FileWatcher
 
     public function dispatch_event_if($condition, $message)
     {
-        if ( is_object($this->event) && method_exists($this->event, 'dispatch') ) {
+        if (is_object($this->event) && method_exists($this->event, 'dispatch')) {
             $this->event::dispatch($message);
         }
     }

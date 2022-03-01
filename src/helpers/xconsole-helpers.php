@@ -5,7 +5,21 @@
  */
 function repair_cache_directories($basedir = null)
 {
-    $dirs = [ 'storage\app', 'storage\app\public', 'storage\app', 'storage\framework ', 'storage\framework\cache', 'storage\framework\cache\data', 'storage\framework\cache', 'storage\framework', 'storage\framework\sessions', 'storage\framework', 'storage\framework\testing', 'storage\framework', 'storage\framework\views', 'storage\framework', 'storage\logs', ];
+    $dirs = [ 'storage\app',
+              'storage\app\public',
+              'storage\app',
+              'storage\framework ',
+              'storage\framework\cache',
+              'storage\framework\cache\data',
+              'storage\framework\cache',
+              'storage\framework',
+              'storage\framework\sessions',
+              'storage\framework',
+              'storage\framework\testing',
+              'storage\framework',
+              'storage\framework\views',
+              'storage\framework',
+              'storage\logs', ];
     if (!file_exists($basedir)) throw new  Error("Missing base directory");
     foreach ($dirs as $dir) {
         $basedir = rtrim($basedir, "/\\");
@@ -28,16 +42,17 @@ if (!function_exists('public_dir')) {
         return $dir;
     }
 }
-if (!function_exists('base_path')) {
-    function base_path($dir = "")
+if (!function_exists('basepath')) {
+    function base_path($path = "")
     {
-        if (empty($dir)) {
-            $dir = realpath(dirname(__FILE__) . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "..");
+        if (empty($path)) {
+            $path = realpath(dirname(__FILE__) . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "..");
         }
 
-        return $dir;
+        return $path;
     }
 }
+/*
 if (!function_exists('dump')) {
     function dump($msg = '')
     {
@@ -45,3 +60,4 @@ if (!function_exists('dump')) {
         error_log(print_r($msg, 1));
     }
 }
+*/
