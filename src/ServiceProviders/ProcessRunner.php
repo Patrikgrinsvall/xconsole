@@ -255,7 +255,6 @@ class ProcessRunner
         XConsoleEvent::dispatch($msg);
     }
 
-
     public function printstats()
     {
         $stats = [];
@@ -268,6 +267,11 @@ class ProcessRunner
         }
 
         return $stats;
+    }
+
+    private function onOut($type, $message)
+    {
+        XConsoleEvent::dispatch();
     }
 
 

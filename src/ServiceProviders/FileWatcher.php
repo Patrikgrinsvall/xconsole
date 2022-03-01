@@ -68,7 +68,7 @@ class FileWatcher
 
         #$last_mtime = filemtime($path);
         #$this->paths[ $path ] = [ 'path' => $path, 'last_mtime' => $last_mtime, 'callback' => $callback, ];
-
+        
         if (is_null($paths)) return $this;
         $pathsToAdd = is_string($paths) ? [ $paths ] : $paths;
         foreach ($pathsToAdd as $path) {

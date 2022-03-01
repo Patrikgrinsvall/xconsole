@@ -52,6 +52,7 @@ if (!function_exists('basepath')) {
         return $path;
     }
 }
+/*
 if (!function_exists('dump')) {
     function dump($msg = '')
     {
@@ -59,3 +60,4 @@ if (!function_exists('dump')) {
         error_log(print_r($msg, 1));
     }
 }
+*/

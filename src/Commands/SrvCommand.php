@@ -13,9 +13,7 @@ use PatrikGrinsvall\XConsole\Traits\HasTheme;
 use Symfony\Component\Console\Cursor;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Process\PhpExecutableFinder;
-use xconsole\helpers;
-use const n;
-use const t;
+
 
 class SrvCommand extends Command
 {
@@ -73,10 +71,8 @@ class SrvCommand extends Command
     public function handle()
     {
         chdir(public_path());
-        $this->cursor    = new Cursor($this->getOutput()->getOutput());
+        $this->cursor    = new Cursor($this->output->getOutput());
         $this->cursorpos = $this->cursor->getCurrentPosition() ?? [ 0, 0 ];
-
-
         $this->registerShutdown();
 
         // if ($this->option('demo')) $this->demoTheme();
@@ -90,8 +86,7 @@ class SrvCommand extends Command
             $this->processRunner->restartAll();
         });
         $this->filewatcher->add(__FILE__);
-
-        $this->processRunner->add('PHP local server', $this->cmd(), public_path());
+        $this->processRunner->add('PHP local server', "php -S localhost:8000 -t server.php", public_path());
         $this->processRunner->add('NPM WATCHER', "npm run watch");
         $this->processRunner->add('PAPERBITS WATCHER', 'npm run paper:build');
         $this->serve();
@@ -113,7 +108,7 @@ class SrvCommand extends Command
                 }
             }
             if (function_exists('pcntl_exec')) {
-                
+
                 pcntl_exec("php ", [ base_path("artisan"), "x:srv", ]);
             } else {
                 // todo rebuild for windows
@@ -124,23 +119,12 @@ class SrvCommand extends Command
         register_shutdown_function($restartFunction);
     }
 
-    /**
-     * Get the full server command.
-     *
-     * @return array
-     */
-    protected function cmd()
-    {
-        return [ (new PhpExecutableFinder)->find(false), '-S', $this->option('host') . ':' . $this->option('port'), base_path('server.php'), ];
-    }
-
     public function serve()
     {
         $this->startTime = microtime();
 
         $this->line('Starting  Extended Dev Server on: ', Env::get('SERVER_PROTO') ?? "http", '://', $this->option('host') ?? getenv("SERVER_ADDR") ?? '127.0.0.1', ':', $this->option('port') ?? getenv('SERVER_PORT') ?? ":8000");
         $this->processRunner->run(function ($type, $msg) {
-            error_log("errrlog, type:$type message: $msg");
             XConsoleEvent::dispatch($this->color(strtoupper($type)) . ' | ' . $msg);
         });
     }
@@ -185,11 +169,11 @@ class SrvCommand extends Command
 
         if (!defined("LARAVEL_START")) {
             define('START', round(microtime(false) / 1000));
-        } else if (!defined('START')) define('START', LARAVEL_START);
+        } else if (!defined('START')) define('START', LARAVEL_START / 1000);
 
         $this->stats['uptime'] = date('s') - date("s", START);
 
-        if ($this->stats['last_output'] <= 5 && $this->stats['last_output'] != 0) return false;
+        #   if ($this->stats['last_output'] <= 1) return false;
         $this->stats['last_output'] = $this->stats['uptime'];
 
         if ($print) {
@@ -230,6 +214,16 @@ class SrvCommand extends Command
         */
 
         #  return $out;
+    }
+
+    /**
+     * Get the full server command.
+     *
+     * @return array
+     */
+    protected function cmd()
+    {
+        return [ (new PhpExecutableFinder)->find(false), '-S', $this->option('host') . ':' . $this->option('port'), base_path('server.php'), ];
     }
 
     /**
