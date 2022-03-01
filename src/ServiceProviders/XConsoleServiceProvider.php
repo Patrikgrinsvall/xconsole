@@ -3,6 +3,8 @@ declare( strict_types=1 );
 
 namespace PatrikGrinsvall\XConsole\ServiceProviders;
 
+use Illuminate\Container\Container;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\ServiceProvider;
 use PatrikGrinsvall\XConsole\Commands\CleanCommand;
 use PatrikGrinsvall\XConsole\Commands\HelpCommand;
@@ -43,8 +45,8 @@ class XConsoleServiceProvider extends ServiceProvider
             $this->commands([ 'x:clean' => CleanCommand::class ]);
             $this->commands([ 'x:install' => InstallCommand::class ]);
             $this->commands([ 'x:record' => RecordCommand::class ]);
-            $this->app->register(ProcessRunner::class);
-            $this->app->register(FileWatcher::class)
+            #$this->app->register(ProcessRunner::class);
+            Container::getInstance()->singleton(FileWatcher::class);
         } else {
             logger("not running in con");
         }
