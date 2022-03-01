@@ -2,13 +2,14 @@
 
 namespace PatrikGrinsvall\XConsole\Tests;
 
+use PatrikGrinsvall\XConsole\ServiceProviders\FileWatcher;
 use PHPUnit\Framework\TestCase;
 
 class FileWatcherTest extends TestCase
 {
     public function test_callbacks_without_changes()
     {
-        $tempFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . date("ymdhis") . ".tmp";
+        $tempFile = sys_get_temp_dir() . "/a" . date("ymdhis") . ".tmp";
         $f        = FileWatcher::make($tempFile, null);
 
         file_put_contents($tempFile, "trivial data");
@@ -54,32 +55,26 @@ class FileWatcherTest extends TestCase
 
     public function test_files_in_directory()
     {
-        $tempdir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . date('ymdhis') . 'dir';
+        $tempdir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . date('ymdhis') . 'dir/';
         mkdir($tempdir);
-        $tempfiles = [ rand(1, 9999) . '.file1',
-                       rand(1, 9999) . '.file2',
-                       rand(1, 9999) . '.file3',
-        ];
-        foreach ($tempfiles as $y) {
+        $tempfiles = [ $tempdir . rand(1, 9999) . '.file1', $tempdir . rand(1, 9999) . '.file2', $tempdir . rand(1, 9999) . '.file3', ];
+        foreach ( $tempfiles as $y ) {
 
-            touch($tempdir . DIRECTORY_SEPARATOR . $y, time() + 10);
+            file_put_contents($y, time() + 10);
         }
-        $called  ['calledtimes'] = 0;
+        $called  [ 'calledtimes' ] = 0;
 
         $f = FileWatcher::make($tempdir, function ($file) use (&$called) {
-            dump([ 'asd',
-                   $called,
-            ]);
-            $called['calledtimes'] = 123;
+            $called[ 'calledtimes' ] = 123;
         });
 
 
-        foreach ($tempfiles as $y) {
-            touch($y, time() + 10);
+        foreach ( $tempfiles as $y ) {
+            file_put_contents($y, time() + 10);
         }
 
         $f->count_changes();
-        foreach ($tempfiles as $ff) unlink($tempdir . DIRECTORY_SEPARATOR . $ff);
+        foreach ( $tempfiles as $ff ) unlink($tempdir . DIRECTORY_SEPARATOR . $ff);
         rmdir($tempdir);
         self::assertEquals(1, 1);
         ## self::assertEquals(2, $called['calledtimes'], 'All 3 files found');

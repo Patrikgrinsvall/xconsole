@@ -54,7 +54,7 @@ class SrvCommand extends Command
     public function __construct()
     {
         parent::__construct();
-        for ($x = 50; $x <= 255; $x += 50) {
+        for ( $x = 50; $x <= 255; $x += 50 ) {
 
             $this->colors[] = "\e[38;255;$x;$x;0m";
         }
@@ -101,15 +101,16 @@ class SrvCommand extends Command
 
     public function registerShutdown()
     {
+
         $restartFunction = function () {
-            $cmd   = $_SERVER['_'];
-            $paths = [ $_SERVER['SCRIPT_FILENAME'], $_SERVER['PWD'] . DIRECTORY_SEPARATOR . 'artisan', ];
-            foreach ($paths as $path) {
-                if (file_exists($path)) {
-                    break;
-                }
-            }
-            if (function_exists('pcntl_exec')) {
+            $cmd   = "php " . $_SERVER[ 'SCRIPT_FILENAME' ];
+            $paths = [ "" . $_SERVER[ 'SCRIPT_FILENAME' ], $_SERVER[ 'PWD' ] . DIRECTORY_SEPARATOR . 'artisan', ];
+            /* foreach ( $paths as $path ) {
+                 if ( file_exists($path) ) {
+                     break;
+                 }
+             }*/
+            if ( function_exists('pcntl_exec') ) {
                 pcntl_exec($cmd, [ $path, "x:srv", ]);
             } else {
                 error_log("pcntl extension not enabled, cannot register shutdown restart");
@@ -125,7 +126,7 @@ class SrvCommand extends Command
      */
     protected function cmd()
     {
-        return [ (new PhpExecutableFinder)->find(false), '-S', $this->option('host') . ':' . $this->option('port'), base_path('server.php'), ];
+        return [ ( new PhpExecutableFinder )->find(false), '-S', $this->option('host') . ':' . $this->option('port'), base_path('server.php'), ];
     }
 
     public function serve()
@@ -140,11 +141,11 @@ class SrvCommand extends Command
 
     public function line(...$msg)
     {
-        foreach ($msg as $key => $m) {
-            $msg[$key] = $this->color($m);
+        foreach ( $msg as $key => $m ) {
+            $msg[ $key ] = $this->color($m);
         }
         parent::getOutput()->write($msg);
-        if (count($msg) - 1 == $key) parent::getOutput()->write("\n");
+        if ( count($msg) - 1 == $key ) parent::getOutput()->write("\n");
 
 
     }
@@ -157,10 +158,10 @@ class SrvCommand extends Command
     public function loop()
     {
         $running = true;
-        while ($running) {
+        while ( $running ) {
             $this->updatestats();
             $changes = $this->filewatcher->count_changes();
-            if ($changes !== 0) {
+            if ( $changes !== 0 ) {
                 $this->call('x:clean');
                 $this->processRunner->restartAll();
                 $this->shouldRestart = true;
@@ -174,29 +175,29 @@ class SrvCommand extends Command
     public function updatestats($print = true, $extended = false)
     {
 
-        if (!defined("LARAVEL_START")) {
+        if ( !defined("LARAVEL_START") ) {
             define('START', microtime());
-        } else if (!defined('START')) define('START', LARAVEL_START);
+        } else if ( !defined('START') ) define('START', LARAVEL_START);
 
-        $this->stats['uptime'] = round(microtime(true) - START, 2);
-        if ($this->stats['last_output'] - $this->stats['uptime'] <= 5) return;
-        $this->stats['last_output'] = $this->stats['uptime'];
+        $this->stats[ 'uptime' ] = round(microtime(true) - START, 2);
+        if ( $this->stats[ 'last_output' ] - $this->stats[ 'uptime' ] <= 5 ) return;
+        $this->stats[ 'last_output' ] = $this->stats[ 'uptime' ];
 
-        if ($print) {
-            $this->cursor->moveToPosition($this->cursorpos[0], $this->cursorpos[1]);
+        if ( $print ) {
+            $this->cursor->moveToPosition($this->cursorpos[ 0 ], $this->cursorpos[ 1 ]);
             $this->cursor->clearOutput();
-            if ($extended) {
+            if ( $extended ) {
                 $header = [ 'type', 'process', 'state', 'cmd', 'cwd', 'timeout', 'forever' ];
             } else $header = [ 'type', 'process', 'state', 'uptime' ];
             $rows   = [];
-            $rows[] = [ 'status', 'xconsole', "processes:" . $this->processRunner->runningProcesses, $this->stats['uptime'] ];
-            foreach ($this->processRunner->processes as $p) {
-                if ($extended) {
-                    $rows[] = [ 'process', $p['title'], $p['state'], $p['cmd'], $p['cwd'], $p['timeout'], 'false' ];
-                } else $rows[] = [ 'process', $p['title'], $p['state'], $p['last_sign'] ];
+            $rows[] = [ 'status', 'xconsole', "processes:" . $this->processRunner->runningProcesses, $this->stats[ 'uptime' ] ];
+            foreach ( $this->processRunner->processes as $p ) {
+                if ( $extended ) {
+                    $rows[] = [ 'process', $p[ 'title' ], $p[ 'state' ], $p[ 'cmd' ], $p[ 'cwd' ], $p[ 'timeout' ], 'false' ];
+                } else $rows[] = [ 'process', $p[ 'title' ], $p[ 'state' ], $p[ 'last_sign' ] ];
             }
-            foreach ($this->filewatcher->paths as $p) {
-                $rows[] = $extended ? [ 'watched', $p['path'], '---', '---', date("Y-m-d h:i:s", $p['last_mtime']), 'true' ] : [ "watched", basename($p['path']), 'exists', $p['last_mtime'] ];
+            foreach ( $this->filewatcher->paths as $p ) {
+                $rows[] = $extended ? [ 'watched', $p[ 'path' ], '---', '---', date("Y-m-d h:i:s", $p[ 'last_mtime' ]), 'true' ] : [ "watched", basename($p[ 'path' ]), 'exists', $p[ 'last_mtime' ] ];
             }
             $this->table($header, $rows);
         }

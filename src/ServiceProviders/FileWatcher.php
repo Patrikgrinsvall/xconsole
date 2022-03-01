@@ -10,10 +10,8 @@ class FileWatcher
 
     public static function make(string $path = null, callable $callback = null)
     {
-        if (self::$i !== null)
-        {
-            if ($path != null)
-            {
+        if ( self::$i !== null ) {
+            if ( $path != null ) {
                 self::$i->add($path, $callback);
             }
 
@@ -27,10 +25,10 @@ class FileWatcher
 
     public function add(string $path, ?callable $callback = null)
     {
-        $stat = stat($path);
-
-        $last_mtime         = $stat['mtime'];
-        $this->paths[$path] = [ 'path' => $path, 'last_mtime' => $last_mtime, 'callback' => $callback, ];
+        #$stat = stat($path);
+        clearstatcache(true, realpath($path));
+        $last_mtime           = filemtime(realpath($path));
+        $this->paths[ $path ] = [ 'path' => $path, 'last_mtime' => $last_mtime, 'callback' => $callback, ];
 
         return $this;
     }
@@ -48,7 +46,7 @@ class FileWatcher
      */
     public function watch(string ...$path)
     {
-        foreach ($path as $item) $this->paths[] = $path;
+        foreach ( $path as $item ) $this->paths[] = $path;
 
         return $this;
 
@@ -57,17 +55,15 @@ class FileWatcher
     public function get_changes()
     {
         $changes = null;
-        foreach ($this->paths as $path)
-        {
-            if ($this->changed($path['path']))
-            {
-                $changes[] = $path['path'];
+        foreach ( $this->paths as $path ) {
+            if ( $this->changed($path[ 'path' ]) ) {
+                $changes[] = $path[ 'path' ];
             }
 
         }
-        if (!isset($changes) || count($changes) == 0) return [];
+        if ( !isset($changes) || count($changes) == 0 ) return [];
 
-        return count($changes) == 1 ? $changes[0] : implode("\n", $changes);
+        return count($changes) == 1 ? $changes[ 0 ] : implode("\n", $changes);
 
     }
 
@@ -77,20 +73,18 @@ class FileWatcher
      */
     public function changed(string $path)
     {
-        if (!isset($this->paths[$path]))
-        {
+        if ( !isset($this->paths[ $path ]) ) {
 
             return 0;
         }
-        $last = $this->paths[$path]['last_mtime'];
+        $last = $this->paths[ $path ][ 'last_mtime' ];
         clearstatcache(false, $path);
         $stat = stat($path);
-        $now  = $stat['mtime'];
+        $now  = $stat[ 'mtime' ];
 
-        if ($last != $now)
-        {
-            $this->paths[$path]['last_mtime'] = $now;
-            $cb                               = $this->paths[$path]['callback'] ?? function ($item) {
+        if ( $last != $now ) {
+            $this->paths[ $path ][ 'last_mtime' ] = $now;
+            $cb                                   = $this->paths[ $path ][ 'callback' ] ?? function ($item) {
                     return false;
                 };
 
@@ -106,9 +100,8 @@ class FileWatcher
     public function count_changes()
     {
         $changes = 0;
-        foreach ($this->paths as $path)
-        {
-            $changes = $changes + $this->changed($path['path']);
+        foreach ( $this->paths as $path ) {
+            $changes = $changes + $this->changed($path[ 'path' ]);
 
         }
 

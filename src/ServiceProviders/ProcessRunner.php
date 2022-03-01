@@ -5,6 +5,7 @@ namespace PatrikGrinsvall\XConsole\ServiceProviders;
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Yaml\Yaml;
 
 class ProcessRunner
 {
@@ -16,6 +17,7 @@ class ProcessRunner
     private static $i;
     public array   $processes;
     public         $app;
+    public         $useStreams       = true;
     public array   $processTemplates = [ 'process_index' => [ // title for presentation
                                                               'title'      => 'echo', 'category' => 'shell', // working dir
                                                               'cwd'        => ".", // path to executable
@@ -37,58 +39,58 @@ class ProcessRunner
     {
         $cls = static::class;
 
-        if (!isset(self::$i[$cls])) {
-            self::$i[$cls] = new static();
+        if ( !isset(self::$i[ $cls ]) ) {
+            self::$i[ $cls ] = new static();
         }
 
-        if (isset($process)) {
+        if ( isset($process) ) {
             // an array with processes
-            if (is_array($process) && is_array($process[0])) {
+            if ( is_array($process) && is_array($process[ 0 ]) ) {
                 error_log('Process is an array containing many commands');
 
             }
-            if (is_array($process) && is_string($process[0])) {
+            if ( is_array($process) && is_string($process[ 0 ]) ) {
                 error_log("Process is an array containing single command");
                 $process = [ $process ];
             }
-            if (is_string($process)) {
+            if ( is_string($process) ) {
                 error_log('Process is single command string');
                 $process = [ explode(" ", $process) ];
             }
-            if (is_callable($process)) {
+            if ( is_callable($process) ) {
                 $process = [ $process ];
             }
-            foreach ($process as $proc) {
-                self::$i[$cls]->add(null, $proc);
+            foreach ( $process as $proc ) {
+                self::$i[ $cls ]->add(null, $proc);
             }
         }
 
-        return self::$i[$cls];
+        return self::$i[ $cls ];
     }
 
     public function add(string $label = null, object|array|string $process = null, string $cwd = ".", $timeout = 600)
     {
         $i = 0;
 
-        $title = $label ?? match (gettype($process)) {
-                "array"  => $process[0],
-                "string" => explode(" ", $process)[0],
+        $title = $label ?? match ( gettype($process) ) {
+                "array"  => $process[ 0 ],
+                "string" => explode(" ", $process)[ 0 ],
                 "object" => 'object'
             };
-        while (isset($this->processes[$title])) $title = $label . '[' . $i++ . ']';
-        if (is_callable($process)) {
+        while ( isset($this->processes[ $title ]) ) $title = $label . '[' . $i++ . ']';
+        if ( is_callable($process) ) {
             die("NOT SUPPORTED TO ADD CLOSURES");
             ##$newProcess = new PhpProcess('<?php $function=' . $process . '; $function();');
 
             error_log("NOT SUPPORTED");
 
         }
-        if (is_string($process)) {
+        if ( is_string($process) ) {
             $process    = explode(" ", $process);
             $newProcess = new Process($process, $cwd);
             #$this->processes[$title] = [ 'title' => $label, 'parameters' => [], 'stderr' => '', 'stdout' => '', 'state' => 'new', 'cwd' => $cwd, 'executable' => $process, 'timeout' => $timeout, 'process' => null, ];
         }
-        if (is_array($process)) {
+        if ( is_array($process) ) {
             $newProcess = new Process($process, $cwd);
         }
         // @formatter:off
@@ -103,7 +105,8 @@ class ProcessRunner
             'stderr' =>'',
             'stdout'=>'',
             'executable' => $newProcess->getCommandLine(),
-            'timeout'=>600
+            'timeout'=>600,
+            'pid'=>0
         ];
         // @formatter:on
 
@@ -114,32 +117,41 @@ class ProcessRunner
         return $this;
     }
 
+    public function saveProcessList($filename)
+    {
+        $processes = $this->processes;
+        $yaml      = Yaml::dump($processes);
+        file_put_contents(__DIR__ . "./../$filename.yaml", $yaml)
+
+
+    }
+
     public function stopAll()
     {
         $this->each($this->processes, function ($process) {
-            XConsoleEvent::dispatch('Stopping: ' . $process['title']);
-            $process['process']->stop();
+            XConsoleEvent::dispatch('Stopping: ' . $process[ 'title' ]);
+            $process[ 'process' ]->stop();
         });
         do {
             XConsoleEvent::dispatch('Waiting for processes to terminate ');
-            foreach ($this->processes as $i => $p) {
+            foreach ( $this->processes as $i => $p ) {
                 /** @var Process $process */
-                $process = $p['process'];
-                if (isset($process) && $process->isRunning() === false) {
-                    XConsoleEvent::dispatch('Terminated: ' . $process['title']);
+                $process = $p[ 'process' ];
+                if ( isset($process) && $process->isRunning() === false ) {
+                    XConsoleEvent::dispatch('Terminated: ' . $process[ 'title' ]);
                     $this->runningProcesses--;
-                    unset($this->processes[$i]['process']);
+                    unset($this->processes[ $i ][ 'process' ]);
                 }
 
             }
             sleep(1);
-        } while ($this->runningProcesses > 0);
+        } while ( $this->runningProcesses > 0 );
     }
 
     public function each(iterable $items, callable $callback)
     {
-        foreach ($items as $processIndex => $process) {
-            if (is_callable($callback)) {
+        foreach ( $items as $processIndex => $process ) {
+            if ( is_callable($callback) ) {
                 $callback($process, $processIndex);
             }
         }
@@ -147,12 +159,12 @@ class ProcessRunner
 
     public function restartAll()
     {
-        if ($this->runningProcesses > 0) {
+        if ( $this->runningProcesses > 0 ) {
             XConsoleEvent::dispatch('Restarting all ');
             $this->each($this->processes, function ($process, $processIndex) {
-                $process['process']->stop();
-                $process['process']->restart();
-                unset($this->processes[$processIndex]['process']);
+                $process[ 'process' ]->stop();
+                $process[ 'process' ]->restart();
+                unset($this->processes[ $processIndex ][ 'process' ]);
             });
         }
     }
@@ -160,35 +172,34 @@ class ProcessRunner
     public function run(callable $loopCallback = null): void
     {
         $this->each($this->processes, function ($processItem, $processIndex) use ($loopCallback) {
-            $process = $this->processes[$processIndex]['process'];
+            $process = $this->processes[ $processIndex ][ 'process' ];
 
             $this->runningProcesses++;
-            $this->processes[$processIndex]['state'] = $process?->getStatus() ?? 'new';
-            if ($process == null) {
-                dump("was null", $processItem);
+            $this->processes[ $processIndex ][ 'state' ] = $process?->getStatus() ?? 'new';
+            if ( $process == null ) {
+                #dump("was null", $processItem);
                 XConsoleEvent::dispatch("process was null! index:" . $processIndex);
 
                 return;
             }
-
+            /** @var Process $process */
             $process->start(function ($type, $message) use ($process, $processIndex, $processItem, $loopCallback) {
-                if ($type == Process::ERR || $type == Process::OUT) {
-                    $this->processes[$processIndex]['last_sign'] = microtime();
-                    $this->processes[$processIndex]['stderr']    .= "\n" . $process->getErrorOutput();
-                    $this->processes[$processIndex]['stdout']    .= "\n" . $process->getOutput();
-                    XConsoleEvent::dispatch('Recieved data:' . $type . ', data:' . $message);
+                XConsoleEvent::dispatch('Recieved data:' . $type . ', data:' . $message);
+                $this->processes[ $processIndex ][ 'pid' ] = $process->getPid();
+                if ( $type == Process::ERR || $type == Process::OUT ) {
+                    $this->processes[ $processIndex ][ 'last_sign' ] = microtime();
+                    $this->processes[ $processIndex ][ 'stderr' ]    .= $process->getErrorOutput();
+                    $this->processes[ $processIndex ][ 'stdout' ]    .= $process->getOutput();
 
-                } else {
-                    XConsoleEvent::dispatch("Recieved unknown data:" . $type . ", data:" . $message);
                 }
-                if ($loopCallback !== null) $loopCallback($type, $message, $process);
-                if ($process->getExitCode() !== null) {
-                    $this->processes[$processIndex]['exitcode'] = $process->getExitCode();
-                    $this->processes[$processIndex]['state']    = $process->getStatus();
-                    if ($process->isTerminated()) {
+                if ( $loopCallback !== null ) $loopCallback($type, $message, $process);
+                if ( $process->getExitCode() !== null ) {
+                    $this->processes[ $processIndex ][ 'exitcode' ] = $process->getExitCode();
+                    $this->processes[ $processIndex ][ 'state' ]    = $process->getStatus();
+                    if ( $process->isTerminated() ) {
                         $this->runningProcesses--;
-                        XConsoleEvent::dispatch('Terminated: ' . $processItem['title'] . ", processes: " . $this->runningProcesses);
-                        if ($this->runningProcesses == 0) {
+                        XConsoleEvent::dispatch('Terminated: ' . $processItem[ 'title' ] . ", processes: " . $this->runningProcesses);
+                        if ( $this->runningProcesses == 0 ) {
                             $this->end();
                         }
                     }
@@ -208,10 +219,10 @@ class ProcessRunner
     public function printstats()
     {
         $stats = [];
-        foreach ($this->processes as $process) {
-            foreach ($process as $key => $string) {
-                if (is_string($string)) {
-                    $stats[$key] = $string;
+        foreach ( $this->processes as $process ) {
+            foreach ( $process as $key => $string ) {
+                if ( is_string($string) ) {
+                    $stats[ $key ] = $string;
                 }
             }
         }

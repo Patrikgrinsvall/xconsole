@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Console\Concerns\HasParameters;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Command\Command as CommandAlias;
+use Symfony\Component\Yaml\Yaml;
 
 class RecordCommand extends Command
 {
@@ -45,7 +46,7 @@ class RecordCommand extends Command
 
             $process[ 'cwd' ]        = $this->ask("What is the directory you want to run process from? (default=./)", "./");
             $process[ 'executable' ] = $this->ask("What process you want to run: " . $process[ 'cwd' ] . "?", "");
-            $process[ 'title' ]      = $this->ask('What is the process title?(enter=' . Str::afterLast(DIRECTORY_SEPARATOR, $process[ 'executable' ]), Str::afterLast(DIRECTORY_SEPARATOR, $process[ 'executable' ]));
+            $process[ 'title' ]      = $this->ask('What is the process title?(enter=' . $process[ 'executable' ], $process[ 'executable' ]);
             $process[ 'parameters' ] = $this->ask('What is the process parameters? (Separated by space)');
             $process[ 'parameters' ] = explode(" ", $process[ 'parameters' ]);
 
