@@ -53,39 +53,29 @@ class ProcessRunner
             self::$i[ $cls ] = new static();
         }
 
-<<<<<<< HEAD
+
         if ( isset($process) ) {
-=======
-        if (isset($process)) {
-            if (is_string($process)) {
-                if (file_exists($process)) {
-                    self::$i[$cls]->loadRunFile($process);
+            if ( is_string($process) ) {
+                if ( file_exists($process) ) {
+                    self::$i[ $cls ]->loadRunFile($process);
 
-                    return self::$i[$cls];
-                } else {
-                    $process = [ explode(' ', $process) ];
+                    return self::$i[ $cls ];
                 }
-            }
->>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
-            // an array with processes
-            if ( is_array($process) && is_array($process[ 0 ]) ) {
-                error_log('Process is an array containing many commands');
 
+                $process = [ explode(' ', $process) ];
             }
+
             if ( is_array($process) && is_string($process[ 0 ]) ) {
-                error_log("Process is an array containing single command");
+
                 $process = [ $process ];
             }
-<<<<<<< HEAD
+
             if ( is_string($process) ) {
-                error_log('Process is single command string');
+
                 $process = [ explode(" ", $process) ];
             }
             if ( is_callable($process) ) {
-=======
 
-            if (is_callable($process)) {
->>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
                 $process = [ $process ];
             }
             foreach ( $process as $proc ) {
@@ -98,13 +88,13 @@ class ProcessRunner
 
     public function loadRunFile($file = "../.xconsole.lastrun.yml")
     {
-        if (file_exists($file)) {
-            $processlist['processlist'] = Yaml::parse(file_get_contents($file));
+        if ( file_exists($file) ) {
+            $processlist[ 'processlist' ] = Yaml::parse(file_get_contents($file));
 
         }
-        foreach ($processlist['processlist'] as $p) {
-            $out[] = [ $p['title'], $p['cmd'], $p['cwd'] ];
-            self::$i[static::class]->add($p['title'], $p['cmd'], $p['cwd']);
+        foreach ( $processlist[ 'processlist' ] as $p ) {
+            $out[] = [ $p[ 'title' ], $p[ 'cmd' ], $p[ 'cwd' ] ];
+            self::$i[ static::class ]->add($p[ 'title' ], $p[ 'cmd' ], $p[ 'cwd' ]);
         }
     }
 
@@ -144,11 +134,9 @@ class ProcessRunner
             'stdout'=>'',
             'executable' => $newProcess->getCommandLine(),
             'timeout'=>600,
-<<<<<<< HEAD
-            'pid'=>0
-=======
+            'pid'=>0,
             'restart' => false // @todo - add support for 0=forever, x=amount of times
->>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
+
         ];
         // @formatter:on
 
@@ -163,7 +151,7 @@ class ProcessRunner
     {
         $processes = $this->processes;
         $yaml      = Yaml::dump($processes);
-        file_put_contents(__DIR__ . "./../$filename.yaml", $yaml)
+        file_put_contents(__DIR__ . "./../$filename.yaml", $yaml);
 
 
     }
@@ -201,22 +189,14 @@ class ProcessRunner
 
     public function restartAll()
     {
-<<<<<<< HEAD
+
+        $this->dumpProcesses();
         if ( $this->runningProcesses > 0 ) {
             XConsoleEvent::dispatch('Restarting all ');
             $this->each($this->processes, function ($process, $processIndex) {
-                $process[ 'process' ]->stop();
+                //$process['process']->stop();
                 $process[ 'process' ]->restart();
                 unset($this->processes[ $processIndex ][ 'process' ]);
-=======
-        $this->dumpProcesses();
-        if ($this->runningProcesses > 0) {
-            XConsoleEvent::dispatch('Restarting all ');
-            $this->each($this->processes, function ($process, $processIndex) {
-                //$process['process']->stop();
-                $process['process']->restart();
-                unset($this->processes[$processIndex]['process']);
->>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
             });
         }
     }
@@ -243,23 +223,16 @@ class ProcessRunner
             }
             /** @var Process $process */
             $process->start(function ($type, $message) use ($process, $processIndex, $processItem, $loopCallback) {
-<<<<<<< HEAD
                 XConsoleEvent::dispatch('Recieved data:' . $type . ', data:' . $message);
                 $this->processes[ $processIndex ][ 'pid' ] = $process->getPid();
+
+                $this->dumpProcesses();
                 if ( $type == Process::ERR || $type == Process::OUT ) {
                     $this->processes[ $processIndex ][ 'last_sign' ] = microtime();
-                    $this->processes[ $processIndex ][ 'stderr' ]    .= $process->getErrorOutput();
-                    $this->processes[ $processIndex ][ 'stdout' ]    .= $process->getOutput();
-=======
-                $this->dumpProcesses();
-                if ($type == Process::ERR || $type == Process::OUT) {
-                    $this->processes[$processIndex]['last_sign'] = microtime();
-                    $this->processes[$processIndex]['stderr']    .= "\n" . $process->getErrorOutput();
-                    $this->processes[$processIndex]['stdout']    .= "\n" . $process->getOutput();
-                    XConsoleEvent::dispatch('Recieved data:' . $type . ', data:' . $message);
->>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
-
+                    $this->processes[ $processIndex ][ 'stderr' ]    .= "\n" . $process->getErrorOutput();
+                    $this->processes[ $processIndex ][ 'stdout' ]    .= "\n" . $process->getOutput();
                 }
+
                 if ( $loopCallback !== null ) $loopCallback($type, $message, $process);
                 if ( $process->getExitCode() !== null ) {
                     $this->processes[ $processIndex ][ 'exitcode' ] = $process->getExitCode();

@@ -104,7 +104,8 @@ class SrvCommand extends Command
 
         $restartFunction = function () {
             $cmd   = "php " . $_SERVER[ 'SCRIPT_FILENAME' ];
-            $paths = [ "" . $_SERVER[ 'SCRIPT_FILENAME' ], $_SERVER[ 'PWD' ] . DIRECTORY_SEPARATOR . 'artisan', ];
+            $pwd   = $_SERVER[ 'PWD' ] ?? dirname(__FILE__ . "/../../");
+            $paths = [ "" . $_SERVER[ 'SCRIPT_FILENAME' ], $pwd . DIRECTORY_SEPARATOR . 'artisan', ];
             /* foreach ( $paths as $path ) {
                  if ( file_exists($path) ) {
                      break;
@@ -196,16 +197,13 @@ class SrvCommand extends Command
                     $rows[] = [ 'process', $p[ 'title' ], $p[ 'state' ], $p[ 'cmd' ], $p[ 'cwd' ], $p[ 'timeout' ], 'false' ];
                 } else $rows[] = [ 'process', $p[ 'title' ], $p[ 'state' ], $p[ 'last_sign' ] ];
             }
-<<<<<<< HEAD
+
             foreach ( $this->filewatcher->paths as $p ) {
-                $rows[] = $extended ? [ 'watched', $p[ 'path' ], '---', '---', date("Y-m-d h:i:s", $p[ 'last_mtime' ]), 'true' ] : [ "watched", basename($p[ 'path' ]), 'exists', $p[ 'last_mtime' ] ];
-=======
-            foreach ($this->filewatcher->paths as $p) {
-                $rows[] = $extended ? [ 'watched', $p['path'], '---', '---', date("Y-m-d h:i:s", $p['last_mtime']), 'true' ] : [ "watched",
-                                                                                                                                 basename($p['path']),
-                                                                                                                                 'exists',
-                                                                                                                                 $p['last_mtime'] ];
->>>>>>> 55979e9653c7a063a3805307043cbc4922343eae
+                $rows[] = $extended ? [ 'watched', $p[ 'path' ], '---', '---', date("Y-m-d h:i:s", $p[ 'last_mtime' ]), 'true' ] : [ "watched",
+                                                                                                                                     basename($p[ 'path' ]),
+                                                                                                                                     'exists',
+                                                                                                                                     $p[ 'last_mtime' ] ];
+
             }
             $this->table($header, $rows);
         }
