@@ -86,7 +86,10 @@ class SrvCommand extends Command
             $this->processRunner->restartAll();
         });
         $this->filewatcher->add(__FILE__);
-        $this->processRunner->add('PHP local server', "php -S localhost:8000 -t server.php", public_path());
+        $this->processRunner->add('PHP local server', [ (new PhpExecutableFinder)->find(false) . " -S",
+                                                        "localhost:8000",
+                                                        "-t",
+                                                        "server.php" ], dirname(base_path("server.php")));
         $this->processRunner->add('NPM WATCHER', "npm run watch");
         $this->processRunner->add('PAPERBITS WATCHER', 'npm run paper:build');
         $this->serve();
@@ -109,7 +112,7 @@ class SrvCommand extends Command
             }
             if (function_exists('pcntl_exec')) {
 
-                pcntl_exec("php ", [ base_path("artisan"), "x:srv", ]);
+                pcntl_exec((new PhpExecutableFinder)->find(false), [ base_path("artisan"), "x:srv", ]);
             } else {
                 // todo rebuild for windows
                 ##$this->proc_res = proc_open($cmd,);
@@ -122,22 +125,9 @@ class SrvCommand extends Command
     public function serve()
     {
         $this->startTime = microtime();
-
-        $this->line('Starting  Extended Dev Server on: ', Env::get('SERVER_PROTO') ?? "http", '://', $this->option('host') ?? getenv("SERVER_ADDR") ?? '127.0.0.1', ':', $this->option('port') ?? getenv('SERVER_PORT') ?? ":8000");
         $this->processRunner->run(function ($type, $msg) {
             XConsoleEvent::dispatch($this->color(strtoupper($type)) . ' | ' . $msg);
         });
-    }
-
-    public function line(...$msg)
-    {
-        foreach ($msg as $key => $m) {
-            $msg[$key] = $this->color($m);
-        }
-        parent::getOutput()->write($msg);
-        if (count($msg) - 1 == $key) parent::getOutput()->write("\n");
-
-
     }
 
     public function color($msg)
@@ -154,6 +144,7 @@ class SrvCommand extends Command
 
             $changes = $this->filewatcher->count_changes();
             if ($changes !== 0) {
+
                 $this->call('x:clean');
                 $this->processRunner->restartAll();
                 $this->shouldRestart = true;
@@ -173,11 +164,15 @@ class SrvCommand extends Command
 
         $this->stats['uptime'] = date('s') - date("s", START);
 
-        #   if ($this->stats['last_output'] <= 1) return false;
+        if ($this->stats['uptime'] % 5 != 1) {
+            return false;
+            sleep(1);
+        }
         $this->stats['last_output'] = $this->stats['uptime'];
 
         if ($print) {
-            $this->cursor->moveToPosition($this->cursorpos[0], $this->cursorpos[1]);
+            #$this->cursor->moveToPosition($this->cursorpos[0], $this->cursorpos[1]);
+            $this->cursor->moveToPosition(0, 0);
             $this->cursor->clearOutput();
             if ($extended) {
                 $header = [ 'type', 'process', 'state', 'cmd', 'cwd', 'timeout', 'forever' ];
@@ -199,7 +194,7 @@ class SrvCommand extends Command
                                         'true' ] : [ "watched",
                                                      basename($p['path']),
                                                      'exists',
-                                                     $p['last_mtime'] ];
+                                                     date('Y-m-d h:i:s', $p['last_mtime']) ];
 
             }
             $this->table($header, $rows);
@@ -214,6 +209,41 @@ class SrvCommand extends Command
         */
 
         #  return $out;
+    }
+
+    public function line(...$msg)
+    {
+        $line = $this->beforeLine();
+        foreach ($msg as $key => $m) {
+            if (is_array($m)) $m = implode(" ", $m);
+            $line .= $this->color($m);
+        }
+        parent::getOutput()->write($$line, true);
+        if (count($msg) - 1 == $key) parent::getOutput()->write("\n");
+    }
+
+    public function beforeLine()
+    {
+        return $this->color("[") . $this->color(date("Y-m-d h:i:s")) . " - uptime:";
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function throw_dispatch($condition, $message)
+    {
+        error_log($message);
+        throw_if($condition && $this->use_exceptions, new Exception($message));
+        $this->dispatch_event_if($condition && $this->event !== null, $message);
+    }
+
+    public function dispatch_event_if($condition, $message)
+    {
+        if ($condition == true) {
+            if (is_object($this->event) && method_exists($this->event, 'dispatch')) {
+                $this->event::dispatch($message);
+            }
+        }
     }
 
     /**

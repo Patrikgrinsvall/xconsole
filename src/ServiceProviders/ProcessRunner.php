@@ -194,7 +194,7 @@ class ProcessRunner
         if ($this->runningProcesses > 0) {
             XConsoleEvent::dispatch('Restarting all ');
             $this->each($this->processes, function ($process, $processIndex) {
-                //$process['process']->stop();
+                $process['process']->stop();
                 $process['process']->restart();
                 unset($this->processes[$processIndex]['process']);
             });
@@ -223,6 +223,7 @@ class ProcessRunner
             }
             /** @var Process $process */
             $process->start(function ($type, $message) use ($process, $processIndex, $processItem, $loopCallback) {
+                $this->processes[$processIndex]['last_mtime'] = $process->getLastOutputTime();
                 XConsoleEvent::dispatch('Recieved data:' . $type . ', data:' . $message);
                 $this->processes[$processIndex]['pid'] = $process->getPid();
 

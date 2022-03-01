@@ -68,7 +68,7 @@ class FileWatcher
 
         #$last_mtime = filemtime($path);
         #$this->paths[ $path ] = [ 'path' => $path, 'last_mtime' => $last_mtime, 'callback' => $callback, ];
-        
+
         if (is_null($paths)) return $this;
         $pathsToAdd = is_string($paths) ? [ $paths ] : $paths;
         foreach ($pathsToAdd as $path) {
@@ -182,45 +182,37 @@ class FileWatcher
         $stat = stat($path);
         $now  = $stat['mtime'];
 
+
+        $last = $this->paths[$path]['last_mtime'];
+
+        if (file_exists($path)) {
+            clearstatcache(true, $path);
+            $now = filemtime($path);
+        } else return 1;
+
         if ($last != $now) {
             $this->paths[$path]['last_mtime'] = $now;
             $cb                               = $this->paths[$path]['callback'] ?? function ($item) {
                     return false;
+
                 };
 
-            $last = $this->paths[$path]['last_mtime'];
+            $cb($path);
 
-            if (file_exists($path)) {
-                clearstatcache(true, $path);
-                $now = filemtime($path);
-            } else return 1;
-
-            if ($last != $now) {
-                $this->paths[$path]['last_mtime'] = $now;
-                $cb                               = $this->paths[$path]['callback'] ?? function ($item) {
-                        return 0;
-
-                    };
-
-                $cb($path);
-
-                return 1;
-            }
-
-            return 0;
-
+            return 1;
         }
+
+        return 0;
+
     }
+
 
     public function getGrace()
     {
 
-        $changes = 0;
-        foreach ($this->paths as $path) {
-            $changes = $changes + $this->changed($path['path']);
 
-            return $this->graceTime;
-        }
+        return $this->graceTime;
+
     }
 
     public function get_changes()
@@ -265,7 +257,7 @@ class FileWatcher
      */
     public function grace(int $time = 5): bool
     {
-
+        return false;
         if ($time != 5) $this->graceTime = $time;
         if ($this->lastCheckTime == 0) {
             $this->lastCheckTime = time();
