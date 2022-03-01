@@ -24,6 +24,7 @@
         "illuminate/console": "^9",
         "illuminate/support": "^9",
         "symfony/console": "^6.0",
+        "symfony/yaml": "^6.0",
         "ext-yaml": "*"
     },
     "require-dev": {

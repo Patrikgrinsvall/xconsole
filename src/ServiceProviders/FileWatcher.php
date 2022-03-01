@@ -140,7 +140,7 @@ class FileWatcher
     public function count_changes()
     {
         if ($this->grace()) {
-            #  $this->throw_dispatch($this->grace(), 'RuntimeException, graceperiod');
+            $this->throw_dispatch($this->grace(), 'RuntimeException, graceperiod', $this->grace());
 
             return 0;
         }
@@ -150,7 +150,7 @@ class FileWatcher
             $changes = $changes + $this->changed($path['path']);
         }
 
-        return $changes + 1;
+        return $changes;
     }
 
     /**
@@ -161,16 +161,33 @@ class FileWatcher
     public function grace(int $time = 5): bool
     {
 
+        if ($time != 5) $this->graceTime = $time;
         if ($this->lastCheckTime == 0) {
             $this->lastCheckTime = time();
 
-            return true;
+            return false;
         }
 
 
-        if (!isset($this->graceTime) || $time != 5) $this->graceTime = $time;
+        return ($this->graceTime + $this->lastCheckTime > time());
+    }
 
-        return ($time + $this->graceTime > time());
+    /**
+     * @throws Throwable
+     */
+    public function throw_dispatch($condition, $message)
+    {
+
+        throw_if($condition && $this->use_exceptions, new Exception($message));
+        $this->dispatch_event_if($condition && $this->event !== null, $message);
+
+    }
+
+    public function dispatch_event_if($condition, $message)
+    {
+        if (is_object($this->event) && method_exists($this->event, 'dispatch')) {
+            $this->event::dispatch($message);
+        }
     }
 
     /**
@@ -208,22 +225,9 @@ class FileWatcher
 
     }
 
-    /**
-     * @throws Throwable
-     */
-    public function throw_dispatch($condition, $message)
+    public function getGrace()
     {
-        error_log($message);
-        throw_if($condition && $this->use_exceptions, new Exception($message));
-        $this->dispatch_event_if($condition && $this->event !== null, $message);
-
-    }
-
-    public function dispatch_event_if($condition, $message)
-    {
-        if (is_object($this->event) && method_exists($this->event, 'dispatch')) {
-            $this->event::dispatch($message);
-        }
+        return $this->graceTime;
     }
 
     public function get_changes()
