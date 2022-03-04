@@ -3,19 +3,20 @@
 namespace PatrikGrinsvall\XConsole\Commands;
 
 use Exception;
-use Illuminate\Console\Command;
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Support\Env;
+use PatrikGrinsvall\XConsole\Commands\BaseCommands\LaravelBaseCommand;
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
-use PatrikGrinsvall\XConsole\ServiceProviders\FileWatcher;
-use PatrikGrinsvall\XConsole\ServiceProviders\ProcessRunner;
+use PatrikGrinsvall\XConsole\Processer\FileWatcher;
+use PatrikGrinsvall\XConsole\Processer\ProcessRunner;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
 use Symfony\Component\Console\Cursor;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Terminal;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 
-class SrvCommand extends Command
+class SrvCommand extends LaravelBaseCommand
 {
     use HasTheme, InteractsWithIO;
 
@@ -24,9 +25,8 @@ class SrvCommand extends Command
     public       $colors     = [ "\e[38;2;255;100;0m", ];
     public       $processRunner, $filewatcher;
     public       $lastUpdate = 0.0;
-
-    public $cursor, $cursorpos;
-    public          $proc_res = null;
+    public       $cursor, $cursorpos;
+    public       $proc_res   = null;
     /**
      * The console command name.
      *
@@ -45,12 +45,16 @@ class SrvCommand extends Command
      * @var int
      */
     protected $portOffset    = 0;
+    private   $event;
     private   $startTime     = 0;
     private   $stdin;
     private   $shouldRestart = false;
     private   $_SERVER;
     private   $stats         = [ 'uptime' => 0, 'last_output' => 0 ];
 
+    /**
+     *
+     */
     public function __construct()
     {
         parent::__construct();
@@ -71,6 +75,7 @@ class SrvCommand extends Command
     public function handle()
     {
         chdir(public_path());
+        $maxX            = new Terminal();
         $this->cursor    = new Cursor($this->output->getOutput());
         $this->cursorpos = $this->cursor->getCurrentPosition() ?? [ 0, 0 ];
         $this->registerShutdown();
@@ -98,29 +103,6 @@ class SrvCommand extends Command
         return true;
     }
 
-    public function registerShutdown()
-    {
-
-        $restartFunction = function () {
-            $cmd   = "php " . $_SERVER['SCRIPT_FILENAME'];
-            $pwd   = $_SERVER['PWD'] ?? base_path('artisan') ?? dirname(__FILE__ . "/../../");
-            $paths = [ $_SERVER['SCRIPT_FILENAME'], $pwd . DIRECTORY_SEPARATOR . 'artisan', ];
-            foreach ($paths as $path) {
-                if (file_exists($path)) {
-                    break;
-                }
-            }
-            if (function_exists('pcntl_exec')) {
-
-                pcntl_exec((new PhpExecutableFinder)->find(false), [ base_path("artisan"), "x:srv", ]);
-            } else {
-                // todo rebuild for windows
-                ##$this->proc_res = proc_open($cmd,);
-                error_log("pcntl extension not enabled, cannot register shutdown restart");
-            }
-        };
-        register_shutdown_function($restartFunction);
-    }
 
     public function serve()
     {
@@ -132,9 +114,12 @@ class SrvCommand extends Command
 
     public function color($msg)
     {
-        return "\e[38;2;255;" . rand(50, 255) . ";" . rand(50, 255) . "m" . $msg . "\e[0m";
+        return "\e[38;2;255;" . random_int(50, 255) . ";" . random_int(50, 255) . "m" . $msg . "\e[0m";
     }
 
+    /**
+     * @return void
+     */
     public function loop()
     {
         $running = true;
@@ -155,6 +140,11 @@ class SrvCommand extends Command
         }
     }
 
+    /**
+     * @param $print
+     * @param $extended
+     * @return false|void
+     */
     public function updatestats($print = true, $extended = false)
     {
 
@@ -211,21 +201,6 @@ class SrvCommand extends Command
         #  return $out;
     }
 
-    public function line(...$msg)
-    {
-        $line = $this->beforeLine();
-        foreach ($msg as $key => $m) {
-            if (is_array($m)) $m = implode(" ", $m);
-            $line .= $this->color($m);
-        }
-        parent::getOutput()->write($$line, true);
-        if (count($msg) - 1 == $key) parent::getOutput()->write("\n");
-    }
-
-    public function beforeLine()
-    {
-        return $this->color("[") . $this->color(date("Y-m-d h:i:s")) . " - uptime:";
-    }
 
     /**
      * @throws Throwable

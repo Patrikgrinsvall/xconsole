@@ -4,12 +4,12 @@ namespace PatrikGrinsvall\XConsole\Commands;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use PatrikGrinsvall\XConsole\Traits\HasTheme;
+use PatrikGrinsvall\XConsole\Commands\BaseCommands\LaravelBaseCommand;
 use Symfony\Component\Process\Process;
 
-class InstallCommand extends XCommand
+class InstallCommand extends LaravelBaseCommand
 {
-    use HasTheme;
+
 
     /**
      * The name and signature of the console command.
@@ -49,11 +49,7 @@ class InstallCommand extends XCommand
     public function check_requirements()
     {
 
-        if (config('database.connections.mysql.database', 'not-set') === 'not-set') {
-            return false;
-        }
-
-        return true;
+        return config('database.connections.mysql.database', 'not-set') !== 'not-set';
     }
 
     public function installHelpers()
@@ -77,7 +73,7 @@ class InstallCommand extends XCommand
 
             Process::fromShellCommandline($cmd)->run(function ($type, $out2) use ($cmd) {
 
-                if ($type == "out") {
+                if ($type === "out") {
                     $this->suprise("STDOUT: " . substr($out2, 0, 100));
                 } else $this->error("STDERR: " . $out2);
 

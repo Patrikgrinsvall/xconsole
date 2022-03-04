@@ -5,23 +5,24 @@ namespace PatrikGrinsvall\XConsole\Commands;
 use Illuminate\Console\Concerns\HasParameters;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use PatrikGrinsvall\XConsole\Commands\BaseCommands\LaravelBaseCommand;
 use PatrikGrinsvall\XConsole\Traits\HasTheme;
 
 /**
  *
  */
-class HelpCommand extends XCommand
+class HelpCommand extends LaravelBaseCommand
 {
     use HasTheme;
     use HasParameters;
 
-    public    $signature = 'x:help';
+    public $signature = 'x:help';
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $name      = 'x:help';
+    protected $name = 'x:help';
     /**
      * The console command description.
      *
