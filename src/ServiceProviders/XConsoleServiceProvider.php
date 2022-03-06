@@ -4,13 +4,12 @@ declare( strict_types=1 );
 namespace PatrikGrinsvall\XConsole\ServiceProviders;
 
 use Illuminate\Container\Container;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\ServiceProvider;
 use PatrikGrinsvall\XConsole\Commands\CleanCommand;
 use PatrikGrinsvall\XConsole\Commands\HelpCommand;
 use PatrikGrinsvall\XConsole\Commands\InstallCommand;
+use PatrikGrinsvall\XConsole\Commands\LaravelSrvCommand;
 use PatrikGrinsvall\XConsole\Commands\RecordCommand;
-use PatrikGrinsvall\XConsole\Commands\SrvCommand;
 use PatrikGrinsvall\XConsole\Events\XConsoleEvent;
 
 
@@ -40,7 +39,7 @@ class XConsoleServiceProvider extends ServiceProvider
                             })->run();
                         });
             */
-            $this->commands([ 'x:srv' => SrvCommand::class ]);
+            $this->commands([ 'x:srv' => LaravelSrvCommand::class ]);
             $this->commands([ 'x:help' => HelpCommand::class ]);
             $this->commands([ 'x:clean' => CleanCommand::class ]);
             $this->commands([ 'x:install' => InstallCommand::class ]);
