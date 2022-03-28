@@ -15,7 +15,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 
-class SrvCommand extends Command
+class LaravelSrvCommand extends Command
 {
     use HasTheme, InteractsWithIO;
 
@@ -54,7 +54,7 @@ class SrvCommand extends Command
     public function __construct()
     {
         parent::__construct();
-        for ($x = 50; $x <= 255; $x += 50) {
+        for ( $x = 50; $x <= 255; $x += 50 ) {
 
             $this->colors[] = "\e[38;255;$x;$x;0m";
         }
@@ -86,10 +86,12 @@ class SrvCommand extends Command
             $this->processRunner->restartAll();
         });
         $this->filewatcher->add(__FILE__);
-        $this->processRunner->add('PHP local server', [ (new PhpExecutableFinder)->find(false) . " -S",
+        $this->processRunner->add('PHP local server', [
+            ( new PhpExecutableFinder )->find(false) . " -S",
                                                         "localhost:8000",
                                                         "-t",
-                                                        "server.php" ], dirname(base_path("server.php")));
+                                                        "server.php" ],
+            dirname(base_path("server.php")));
         $this->processRunner->add('NPM WATCHER', "npm run watch");
         $this->processRunner->add('PAPERBITS WATCHER', 'npm run paper:build');
         $this->serve();
@@ -102,17 +104,17 @@ class SrvCommand extends Command
     {
 
         $restartFunction = function () {
-            $cmd   = "php " . $_SERVER['SCRIPT_FILENAME'];
-            $pwd   = $_SERVER['PWD'] ?? base_path('artisan') ?? dirname(__FILE__ . "/../../");
-            $paths = [ $_SERVER['SCRIPT_FILENAME'], $pwd . DIRECTORY_SEPARATOR . 'artisan', ];
-            foreach ($paths as $path) {
-                if (file_exists($path)) {
+            $cmd   = "php " . $_SERVER[ 'SCRIPT_FILENAME' ];
+            $pwd   = $_SERVER[ 'PWD' ] ?? base_path('artisan') ?? dirname(__FILE__ . "/../../");
+            $paths = [ $_SERVER[ 'SCRIPT_FILENAME' ], $pwd . DIRECTORY_SEPARATOR . 'artisan', ];
+            foreach ( $paths as $path ) {
+                if ( file_exists($path) ) {
                     break;
                 }
             }
-            if (function_exists('pcntl_exec')) {
+            if ( function_exists('pcntl_exec') ) {
 
-                pcntl_exec((new PhpExecutableFinder)->find(false), [ base_path("artisan"), "x:srv", ]);
+                pcntl_exec(( new PhpExecutableFinder )->find(false), [ base_path("artisan"), "x:srv", ]);
             } else {
                 // todo rebuild for windows
                 ##$this->proc_res = proc_open($cmd,);
@@ -138,12 +140,12 @@ class SrvCommand extends Command
     public function loop()
     {
         $running = true;
-        while ($running) {
+        while ( $running ) {
             $this->updatestats();
             #if ($stats != false) XConsoleEvent::dispatch("->>" . $stats);
 
             $changes = $this->filewatcher->count_changes();
-            if ($changes !== 0) {
+            if ( $changes !== 0 ) {
 
                 $this->call('x:clean');
                 $this->processRunner->restartAll();
@@ -158,43 +160,46 @@ class SrvCommand extends Command
     public function updatestats($print = true, $extended = false)
     {
 
-        if (!defined("LARAVEL_START")) {
+        if ( !defined("LARAVEL_START") ) {
             define('START', round(microtime(false) / 1000));
-        } else if (!defined('START')) define('START', LARAVEL_START / 1000);
+        } else if ( !defined('START') ) define('START', LARAVEL_START / 1000);
 
-        $this->stats['uptime'] = date('s') - date("s", START);
+        $this->stats[ 'uptime' ] = date('s') - date("s", START);
 
-        if ($this->stats['uptime'] % 5 != 1) {
+        if ( $this->stats[ 'uptime' ] % 5 != 1 ) {
             return false;
             sleep(1);
         }
-        $this->stats['last_output'] = $this->stats['uptime'];
+        $this->stats[ 'last_output' ] = $this->stats[ 'uptime' ];
 
-        if ($print) {
+        if ( $print ) {
             #$this->cursor->moveToPosition($this->cursorpos[0], $this->cursorpos[1]);
             $this->cursor->moveToPosition(0, 0);
             $this->cursor->clearOutput();
-            if ($extended) {
+            if ( $extended ) {
                 $header = [ 'type', 'process', 'state', 'cmd', 'cwd', 'timeout', 'forever' ];
             } else $header = [ 'type', 'process', 'state', 'uptime' ];
             $rows   = [];
-            $rows[] = [ 'status', 'xconsole', "processes:" . $this->processRunner->runningProcesses, $this->stats['uptime'] ];
-            foreach ($this->processRunner->processes as $p) {
-                if ($extended) {
-                    $rows[] = [ 'process', $p['title'], $p['state'], $p['cmd'], $p['cwd'], $p['timeout'], 'false' ];
-                } else $rows[] = [ 'process', $p['title'], $p['state'], $p['last_sign'] ];
+            $rows[] = [ 'status',
+                        'xconsole',
+                        "processes:" . $this->processRunner->runningProcesses,
+                        $this->stats[ 'uptime' ] ];
+            foreach ( $this->processRunner->processes as $p ) {
+                if ( $extended ) {
+                    $rows[] = [ 'process', $p[ 'title' ], $p[ 'state' ], $p[ 'cmd' ], $p[ 'cwd' ], $p[ 'timeout' ], 'false' ];
+                } else $rows[] = [ 'process', $p[ 'title' ], $p[ 'state' ], $p[ 'last_sign' ] ];
             }
 
-            foreach ($this->filewatcher->get_watched() as $p) {
+            foreach ( $this->filewatcher->get_watched() as $p ) {
                 $rows[] = $extended ? [ 'watched',
-                                        $p['path'],
+                                        $p[ 'path' ],
                                         '---',
                                         '---',
-                                        date("Y-m-d h:i:s", $p['last_mtime']),
+                                        date("Y-m-d h:i:s", $p[ 'last_mtime' ]),
                                         'true' ] : [ "watched",
-                                                     basename($p['path']),
+                                                     basename($p[ 'path' ]),
                                                      'exists',
-                                                     date('Y-m-d h:i:s', $p['last_mtime']) ];
+                                                     date('Y-m-d h:i:s', $p[ 'last_mtime' ]) ];
 
             }
             $this->table($header, $rows);
@@ -214,12 +219,12 @@ class SrvCommand extends Command
     public function line(...$msg)
     {
         $line = $this->beforeLine();
-        foreach ($msg as $key => $m) {
-            if (is_array($m)) $m = implode(" ", $m);
+        foreach ( $msg as $key => $m ) {
+            if ( is_array($m) ) $m = implode(" ", $m);
             $line .= $this->color($m);
         }
         parent::getOutput()->write($$line, true);
-        if (count($msg) - 1 == $key) parent::getOutput()->write("\n");
+        if ( count($msg) - 1 == $key ) parent::getOutput()->write("\n");
     }
 
     public function beforeLine()
@@ -239,8 +244,8 @@ class SrvCommand extends Command
 
     public function dispatch_event_if($condition, $message)
     {
-        if ($condition == true) {
-            if (is_object($this->event) && method_exists($this->event, 'dispatch')) {
+        if ( $condition == true ) {
+            if ( is_object($this->event) && method_exists($this->event, 'dispatch') ) {
                 $this->event::dispatch($message);
             }
         }
@@ -253,7 +258,10 @@ class SrvCommand extends Command
      */
     protected function cmd()
     {
-        return [ (new PhpExecutableFinder)->find(false), '-S', $this->option('host') . ':' . $this->option('port'), base_path('server.php'), ];
+        return [ ( new PhpExecutableFinder )->find(false),
+                 '-S',
+                 $this->option('host') . ':' . $this->option('port'),
+                 base_path('server.php'), ];
     }
 
     /**
@@ -263,9 +271,21 @@ class SrvCommand extends Command
      */
     protected function getOptions()
     {
-        return [ [ 'host', null, InputOption::VALUE_OPTIONAL, 'The host address to serve the application on', Env::get('SERVER_ADDR', '127.0.0.1'), ],
-                 [ 'run', null, InputOption::VALUE_OPTIONAL, 'a file with existing processes to run, like a recepie', '../.xconsole.lastrun.yml', ],
-                 [ 'port', null, InputOption::VALUE_OPTIONAL, 'The port to serve the application on', Env::get('SERVER_PORT', 8000), ],
+        return [ [ 'host',
+                   null,
+                   InputOption::VALUE_OPTIONAL,
+                   'The host address to serve the application on',
+                   Env::get('SERVER_ADDR', '127.0.0.1'), ],
+                 [ 'run',
+                   null,
+                   InputOption::VALUE_OPTIONAL,
+                   'a file with existing processes to run, like a recepie',
+                   '../.xconsole.lastrun.yml', ],
+                 [ 'port',
+                   null,
+                   InputOption::VALUE_OPTIONAL,
+                   'The port to serve the application on',
+                   Env::get('SERVER_PORT', 8000), ],
                  [ 'tries', null, InputOption::VALUE_OPTIONAL, 'The max number of ports to attempt to serve from', 10, ], ];
     }
 }

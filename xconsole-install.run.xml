@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="xconsole-install" type="PhpLocalRunConfigurationType" factoryName="PHP Console" path="$PROJECT_DIR$/../../Patrikgrinsvall/xconsole/master/src/helpers/installer.php">
+    <CommandLine workingDirectory="$PROJECT_DIR$/../../Patrikgrinsvall/xconsole/master">
+      <PhpTestInterpreterSettings>
+        <option name="interpreterName" value="PHP 8.1" />
+      </PhpTestInterpreterSettings>
+    </CommandLine>
+    <method v="2" />
+  </configuration>
+</component>

@@ -46,6 +46,9 @@
         ],
         "post-package-update": [
             "@composer run publish"
+        ],
+        "install-swoole-win64": [
+            "@php src/helpers/installer.php"
         ]
     },
     "config": {

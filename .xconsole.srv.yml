@@ -1,3 +1,4 @@
+## this doesnt work ofc, its just an example
 command: x:srv
 watch:
     envfile:
